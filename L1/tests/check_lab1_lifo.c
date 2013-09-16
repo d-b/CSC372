@@ -13,7 +13,6 @@
 #include "../src/process.h"
 #include "../src/list.h"
 
-
 START_TEST(test_lifo_create)
 {
     struct LL* list = CreateList(L_LIFO);
@@ -97,7 +96,6 @@ START_TEST(test_lifo_enqueue_dequeue_multiple)
 }
 END_TEST
 
-
 START_TEST(test_lifo_dequeue_empty)
 {
     struct LL* list;
@@ -116,7 +114,6 @@ START_TEST(test_lifo_dequeue_empty)
     DestroyList(list);
 }
 END_TEST
-
 
 START_TEST(test_lifo_enqueue_nonlifo)
 {
