@@ -11,5 +11,6 @@ RC PriorityEnqueue(struct PD* pd, struct LL* list);
 RC EnqueueAtHead(struct PD* pd, struct LL* list);
 RC WaitlistEnqueue(struct PD* pd, int waittime, struct LL* list);
 struct PD* FindPD(ProcessId pid, struct LL *list);
-struct PD* AllocatePD();
 RC DequeuePD(struct PD *pd);
+struct PD* AllocatePD();
+RC DestroyPD(struct PD* pd);

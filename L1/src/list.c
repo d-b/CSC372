@@ -68,6 +68,7 @@ struct PD* DequeueHead(struct LL* list) {
     // Delink current head and return it
     struct PD* dequeued = list->head;
     list->head = list->head->link;
+    dequeued->inlist = NULL;
     return dequeued;
 }
 
@@ -131,6 +132,9 @@ RC EnqueueAtHead(struct PD* pd, struct LL* list) {
  * if list is not a waiting list and 0 otherwise.
  */
 RC WaitlistEnqueue(struct PD* pd, int waittime, struct LL* list) {
+    // Set wait time
+    pd->waittime = waittime;
+
     // Perform the enqueue
     pd->link = list->head;
     list->head = pd;
@@ -158,6 +162,27 @@ struct PD* FindPD(ProcessId pid, struct LL *list) {
 }
 
 /*
+ * DequeuePD
+ *
+ * Dequeues pd from whatever list it might be in, if it is in one.
+ */
+RC DequeuePD(struct PD *pd) {
+    // Bailout if it does not belong to a list
+    struct LL* list = pd->inlist;
+    if(!list) return -1;
+    // Check if its the head
+    if(list->head == pd)
+        return DequeueHead(list) != NULL ? 0 : -1;
+    // Find the previous node and do the delink
+    struct PD* prev = NULL;
+    for(prev = list->head; prev->link != pd; prev = prev->link);
+    if(!prev) return -1; // Something very bad happened
+    prev->link = pd->link;
+    pd->inlist = NULL;
+    return 0;
+}
+
+/*
  * AllocatePD
  *
  * Allocates a PD.
@@ -170,21 +195,11 @@ struct PD* AllocatePD() {
 }
 
 /*
- * DequeuePD
+ * DestroyPD
  *
- * Dequeues pd from whatever list it might be in, if it is in one.
+ * Destroys a PD.
  */
-RC DequeuePD(struct PD *pd) {
-    // The list the node belongs to
-    struct LL* list = pd->inlist;
-    // Check if its the head
-    if(list->head == pd)
-        return DequeueHead(list) != NULL ? 0 : -1;
-    // Find the previous node and do the delink
-    struct PD* prev = NULL;
-    for(prev = list->head; prev->link != pd; prev = prev->link);
-    if(!prev) return -1; // Something very bad happened
-    prev->link = pd->link;
-    free(pd);
-    return 0;
+RC DestroyPD(struct PD* pd) {
+    if(!pd) return -1;
+    free(pd); return 0;
 }
