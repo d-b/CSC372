@@ -49,7 +49,7 @@ END_TEST
 START_TEST(test_lifo_enqueue_multiple)
 {
     static const int count = 100;
-    struct PD* entry; int i; 
+    struct PD* entry; int i;
     struct LL* list = CreateList(L_LIFO);
     struct PD* pd[count];
 
@@ -74,7 +74,7 @@ END_TEST
 START_TEST(test_lifo_enqueue_dequeue_multiple)
 {
     static const int count = 100;
-    struct PD* entry; int i; 
+    struct PD* entry; int i;
     struct LL* list = CreateList(L_LIFO);
     struct PD* pd[count];
 
@@ -103,7 +103,7 @@ START_TEST(test_lifo_dequeue_empty)
     list = CreateList(L_LIFO);
     ck_assert(DequeueHead(list) == NULL);
     ck_assert(DestroyList(list) == 0);
-    
+
     list = CreateList(L_LIFO);
     struct PD* pd = AllocatePD();
     pd->pid = 1;
@@ -144,7 +144,7 @@ Suite* make_lifo_suite() {
     tcase_add_test(tc_invalid, test_lifo_dequeue_empty);
     tcase_add_test(tc_invalid, test_lifo_enqueue_nonlifo);
     suite_add_tcase(s, tc_invalid);
-    
+
     // Return constructed suite
     return s;
 }

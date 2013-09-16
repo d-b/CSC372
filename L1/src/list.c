@@ -132,6 +132,9 @@ RC EnqueueAtHead(struct PD* pd, struct LL* list) {
  * if list is not a waiting list and 0 otherwise.
  */
 RC WaitlistEnqueue(struct PD* pd, int waittime, struct LL* list) {
+    // Ensure list is a waitlist
+    if(list->type != L_WAITING) return -1;
+
     // Set wait time
     pd->waittime = waittime;
 
@@ -140,14 +143,13 @@ RC WaitlistEnqueue(struct PD* pd, int waittime, struct LL* list) {
     list->head = pd;
 
     // PD will be in the given list
-    pd->inlist = list;    
+    pd->inlist = list;
 
     // Add the time to the rest of the PDs
     for(pd = list->head->link; pd; pd = pd->link)
         pd->waittime += waittime;
     return 0;
 }
-
 
 /*
  * FindPD
