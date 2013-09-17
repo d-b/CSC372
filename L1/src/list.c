@@ -72,22 +72,16 @@ struct PD* DequeueHead(struct LL* list) {
     return dequeued;
 }
 
-/* 
- * PriorityEnqueue
- * 
- * If list is a priority list, then enqueues pd in its proper
- * location. Returns -1 if list is not a priority list and 0
- * otherwise.
- */
-RC PriorityEnqueue(struct PD* pd, struct LL* list) {
-    // Ensure list is a priority queue
-    if(list->type != L_PRIORITY) return -1;
 
+/* 
+ * OrderedEnqueue
+ */
+static RC OrderedEnqueue(struct PD* pd, struct LL* list, int(*getorder)(struct PD* pd)){
     // PD will be in the given list
     pd->inlist = list;
 
     // See if we are the new head
-    if(!list->head || pd->priority < list->head->priority) {
+    if(!list->head || getorder(pd) < getorder(list->head)) {
         if(list->head) pd->link = list->head;
         list->head = pd;
         return 0;
@@ -96,12 +90,29 @@ RC PriorityEnqueue(struct PD* pd, struct LL* list) {
     // Search for a place to insert
     struct PD* prev;
     for(prev = list->head; prev->link; prev = prev->link)
-        if(pd->priority < prev->link->priority) break;
+        if(getorder(pd) < getorder(prev->link)) break;
 
     // Perform the insertion    
     pd->link = prev->link;
     prev->link = pd;
     return 0;
+}
+
+
+/* 
+ * PriorityEnqueue
+ * 
+ * If list is a priority list, then enqueues pd in its proper
+ * location. Returns -1 if list is not a priority list and 0
+ * otherwise.
+ */
+static int _order_priority(struct PD* pd){return pd->priority;}
+RC PriorityEnqueue(struct PD* pd, struct LL* list) {
+    // Ensure list is a priority queue
+    if(list->type != L_PRIORITY) return -1;
+
+    // Perform the ordered enqueue
+    return OrderedEnqueue(pd, list, _order_priority);
 }
 
 /* 
@@ -115,7 +126,7 @@ RC EnqueueAtHead(struct PD* pd, struct LL* list) {
     if(list->type != L_LIFO) return -1;
 
     // PD will be in the given list
-    pd->inlist = list;    
+    pd->inlist = list;
 
     // Perform the enqueue
     pd->link = list->head;
@@ -131,23 +142,28 @@ RC EnqueueAtHead(struct PD* pd, struct LL* list) {
  * other elements in the list should be properly adjusted. Return -1
  * if list is not a waiting list and 0 otherwise.
  */
+static int _order_waittime(struct PD* pd){return pd->waittime;}
 RC WaitlistEnqueue(struct PD* pd, int waittime, struct LL* list) {
     // Ensure list is a waitlist
     if(list->type != L_WAITING) return -1;
 
-    // Set wait time
-    pd->waittime = waittime;
+    // Perform ordered enqueue
+    RC result = OrderedEnqueue(pd, list, _order_waittime);
+    if(result < 0) return result;
 
-    // Perform the enqueue
-    pd->link = list->head;
-    list->head = pd;
+    //
+    // Fix up wait time
+    //
+    struct PD* other = NULL;
 
-    // PD will be in the given list
-    pd->inlist = list;
+    // Add our wait time to those we are ahead of
+    for(other = pd->link; other; other = other->link)
+        other->waittime += waittime;
 
-    // Add the time to the rest of the PDs
-    for(pd = list->head->link; pd; pd = pd->link)
-        pd->waittime += waittime;
+    // Accumulate wait time up to our inserted PD
+    for(other = list->head->link; other && other != pd; other = other->link)
+        waittime += other->waittime;
+
     return 0;
 }
 
