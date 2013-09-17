@@ -203,8 +203,6 @@ RC DequeuePD(struct PD *pd) {
 //
 
 static struct {
-    int initialized;  // whether or not the manager is initialized
-
     int next_process, // next process to allocate
         next_free;    // next free process (1-indexed)
 
