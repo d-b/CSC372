@@ -72,7 +72,6 @@ struct PD* DequeueHead(struct LL* list) {
     return dequeued;
 }
 
-
 /* 
  * OrderedEnqueue
  */
@@ -97,7 +96,6 @@ static RC OrderedEnqueue(struct PD* pd, struct LL* list, int(*getorder)(struct P
     prev->link = pd;
     return 0;
 }
-
 
 /* 
  * PriorityEnqueue
@@ -200,16 +198,39 @@ RC DequeuePD(struct PD *pd) {
     return 0;
 }
 
+//
+// Process descriptor management
+//
+
+static struct {
+    int initialized;  // whether or not the manager is initialized
+
+    int next_process, // next process to allocate
+        next_free;    // next free process (1-indexed)
+
+    struct PD process[MAX_PROCESSES];
+    int freelist[MAX_PROCESSES];
+} _processes = {0};
+
 /*
  * AllocatePD
  *
  * Allocates a PD.
  */
 struct PD* AllocatePD() {
-    struct PD* pd = malloc(sizeof(struct PD));
-    if(!pd) return NULL;
-    memset(pd, 0, sizeof(struct PD));
-    return pd;
+    // See if we have a free process
+    if(_processes.next_free) {
+        _processes.next_free -= 1;
+        int freepd = _processes.freelist[_processes.next_free - 1];
+        return &_processes.process[freepd];
+    }
+
+    // If we are out of processes bailout
+    if(_processes.next_process == MAX_PROCESSES)
+        return NULL;
+
+    // Otherwise return the next process
+    return &_processes.process[_processes.next_process++];
 }
 
 /*
@@ -218,6 +239,15 @@ struct PD* AllocatePD() {
  * Destroys a PD.
  */
 RC DestroyPD(struct PD* pd) {
-    if(!pd) return -1;
-    free(pd); return 0;
+    // Perform a linear search for the PD
+    // TODO: add a hash table to speed this up
+    for(int i = 0; i < MAX_PROCESSES; i++) {
+        if(&_processes.process[i] == pd) {
+            _processes.freelist[_processes.next_free++] = i;
+            return 0;
+        }
+    }
+
+    // Process descriptor not found.
+    return -1;
 }

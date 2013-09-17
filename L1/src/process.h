@@ -4,6 +4,8 @@
  * Process structures
  */
 
+#define MAX_PROCESSES 1024 
+
 typedef int ProcessId;
 
 struct PD {
