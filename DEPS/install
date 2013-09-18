@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Setup our build & target paths
+BUILD_PATH=$HOME/.local/tmp
+TARGET_PATH=$HOME/.local
+
+# Make sure our build & target paths exist
+mkdir -p $BUILD_PATH
+mkdir -p $TARGET_PATH
+
+#
+# Check library
+#
+tar xvzfC check-0.9.10.tar.gz $BUILD_PATH
+# build the library
+pushd $BUILD_PATH/check-0.9.10
+./configure --prefix=$TARGET_PATH
+make install
+popd
+# cleanup
+rm -rf $BUILD_PATH
