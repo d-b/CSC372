@@ -1,9 +1,6 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-# Add our profile packages
-export PKG_CONFIG_PATH=$HOME/.local/lib/pkgconfig
-
 AC_PREREQ([2.59])
 AC_INIT([lab1], [0.1])
 AC_CONFIG_SRCDIR([src/list.c])
@@ -17,6 +14,9 @@ LT_INIT
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_LIBTOOL
+
+# Add our profile packages
+export PKG_CONFIG_PATH=$HOME/.local/lib/pkgconfig
 
 # Checks for libraries.
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
