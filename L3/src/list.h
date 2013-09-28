@@ -1,9 +1,15 @@
+/*
+ * CSC372 - Lab 3
+ *
+ * Thread list declarations
+ */
+
 #ifndef _LIST_H_
 #define _LIST_H_
 
 #include "defines.h"
 
-typedef enum { UNDEF, L_PRIORITY, L_LIFO, L_WAITING} ListType ;
+typedef enum {UNDEF, L_PRIORITY, L_LIFO, L_WAITING} ListType ;
 
 #define MIN_PRIORITY 100
 
@@ -35,7 +41,17 @@ struct type_TD
   LL * inlist;
 };
 
-TD *CreateTD(ThreadId tid);
-void InitTD(TD *td, uval32 pc, uval32 sp, uval32 priority);
+TD* CreateTD(ThreadId tid);
+void InitTD(TD* td, uval32 pc, uval32 sp, uval32 priority);
+RC DestroyTD(TD* td);
+
+RC InitList(ListType type, LL* list);
+RC DestroyList(LL* list);
+TD* DequeueHead(LL* list);
+RC PriorityEnqueue(TD* td, LL* list);
+RC EnqueueAtHead(TD* td, LL* list);
+RC WaitlistEnqueue(TD* td, int waittime, LL* list);
+TD* FindTD(ThreadId pid, LL *list);
+RC DequeueTD(TD *td);
 
 #endif

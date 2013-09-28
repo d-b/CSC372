@@ -1,3 +1,9 @@
+/*
+ * CSC372 - Lab 3
+ *
+ * Exception handling
+ */
+
 #include "defines.h"
 #include "main.h"
 #include "kernel.h"

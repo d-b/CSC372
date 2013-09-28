@@ -21,27 +21,3 @@ int main(void)
   
   return 0;
 }
-
-#ifdef NATIVE
-
-void myprint(char *text)
-{
-  
-  while(*text != '\0') {
-    
-    if((*JTAG_UART_CONTROL)&0xffff0000 ) {
-      
-      *JTAG_UART_DATA = (*text++);
-      
-    }
-  }
-}
-
-#else /* NATIVE */
-
-void myprint(char *text)
-{
-  printf(text);
-}
-
-#endif /* NATIVE */

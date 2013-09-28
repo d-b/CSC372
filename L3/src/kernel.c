@@ -1,3 +1,9 @@
+/*
+ * CSC372 - Lab 3
+ *
+ * Kernel code
+ */
+
 #include "defines.h"
 #include "list.h"
 #include "kernel.h"
@@ -19,8 +25,6 @@ InitKernel(void) {
 #endif /* NATIVE */
 }
 
-
-
 void K_SysCall( SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2) 
 { 
 #ifdef NATIVE
@@ -34,7 +38,7 @@ void K_SysCall( SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
     returnCode = CreateThread( arg0, arg1, arg2 ) ; 
     break ; 
   default:
-    myprint("Invalid SysCall type\n");
+    debugf("Invalid SysCall type\n");
     returnCode = RC_FAILED;
     break;
   } 
@@ -47,7 +51,7 @@ void K_SysCall( SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
 RC CreateThread( uval32 pc, uval32 sp, uval32 priority ) 
 { 
   RC sysReturn = RC_SUCCESS;
-  myprint("CreateThread ");
+  debugf("CreateThread ");
   return sysReturn;
 } 
 
@@ -58,7 +62,7 @@ Idle()
   int i; 
   while( 1 ) 
     { 
-      myprint( "CPU is idle\n" ); 
+      debugf( "CPU is idle\n" ); 
       for( i = 0; i < MAX_THREADS; i++ ) 
 	{ 
 	} 
