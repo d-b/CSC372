@@ -31,7 +31,7 @@ typedef struct {
 static irq_handler_entry irq_handlers[IRQ_MAX];
 
 /*
- * first_irq
+ * find_first_irq
  *
  * Find the first IRQ in a given mask
  */
@@ -96,6 +96,17 @@ void irql_raise(IRQL newirql, IRQL* oldirql) {
 }
 
 /*
+ * irql_lower
+ *
+ * Lower the interrupt level
+ */
+void irql_lower(IRQL* oldirql) {
+    IRQL newirql = *oldirql;
+    InterruptLevel = newirql;
+    if(newirql == IRQL_LOW) irq_enable();
+}
+
+/*
  * irql_register
  *
  * Register an interrupt handler
@@ -123,15 +134,4 @@ void irq_dispatch(int irq_mask) {
     int irq = find_first_irq(irq_mask);
     if(irq_handlers[irq].enabled)
         irq_handlers[irq].handler.routine();
-}
-
-/*
- * irql_lower
- *
- * Lower the interrupt level
- */
-void irql_lower(IRQL* oldirql) {
-    IRQL newirql = *oldirql;
-    InterruptLevel = newirql;
-    if(newirql == IRQL_LOW) irq_enable();
 }

@@ -29,18 +29,39 @@ InitKernel(void) {
 #endif /* NATIVE */
 }
 
-void K_SysCall( SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2) 
+void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
 { 
 #ifdef NATIVE
   asm(".align 4; .global SysCallHandler; SysCallHandler:");
   uval32 sysMode = SYS_EXIT;
 #endif
 
-  RC returnCode ; 
+  RC returnCode; 
   switch( type ) {
     case SYS_CREATE: 
-    returnCode = CreateThread( arg0, arg1, arg2 ) ; 
-    break ; 
+    returnCode = CreateThread(arg0, arg1, arg2) ; 
+    break;
+
+    case SYS_SUSPEND:
+    returnCode = SuspendThread(arg0);
+    break;
+
+    case SYS_RESUME:
+    returnCode = ResumeThread(arg0);
+    break;
+
+    case SYS_CHANGEPRIORITY:
+    returnCode = ChangeThreadPriority(arg0);
+    break;
+
+    case SYS_YIELD:
+    returnCode = Yield();
+    break;
+
+    case SYS_DESTROY:
+    returnCode = DestroyThread(arg0);
+    break;
+
   default:
     printk("Invalid SysCall type\n");
     returnCode = RC_FAILED;
@@ -52,12 +73,31 @@ void K_SysCall( SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
 #endif /* NATIVE */
 }
 
-RC CreateThread( uval32 pc, uval32 sp, uval32 priority ) 
-{ 
+RC CreateThread(uval32 pc, uval32 sp, uval32 priority) { 
   RC sysReturn = RC_SUCCESS;
   printk("CreateThread ");
   return sysReturn;
-} 
+}
+
+RC SuspendThread(uval32 tid) {
+  return RC_SUCCESS;
+}
+
+RC ResumeThread(uval32 tid) {
+  return RC_SUCCESS;
+}
+
+RC ChangeThreadPriority(uval32 priority) {
+  return RC_SUCCESS;
+}
+
+RC Yield(){
+  return RC_SUCCESS;
+}
+
+RC DestroyThread(uval32 tid) {
+  return RC_SUCCESS;
+}
 
 void 
 Idle() 

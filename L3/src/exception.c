@@ -20,9 +20,9 @@ void the_reset (void)
  * This code just calls the main program.                                           *
  ***********************************************************************************/
 {
-  asm (".set		noat");					// Magic, for the C compiler
-  asm (".set		nobreak");				// Magic, for the C compiler
-  asm ("br		main");		// Call the C language main program
+  asm (".set noat"); // Magic, for the C compiler
+  asm (".set nobreak"); // Magic, for the C compiler
+  asm ("br main"); // Call the C language main program
 }
 
 
@@ -33,22 +33,22 @@ void the_isr (void)
 /*   Calls the interrupt handler and performs return from exception.         */
 /*****************************************************************************/
 {
-  asm (".set		noat");
-  asm (".set		nobreak");
-  asm (	"subi	sp,  sp, 116");
-  asm (	"rdctl	et,  ctl4");
-  asm (	"beq	et,  r0, SOFT_INT");	/* Interrupt is not external         */
-  asm (	"subi	ea,  ea, 4");		
+  asm (".set noat");
+  asm (".set nobreak");
+  asm ("subi sp,  sp, 116");
+  asm ("rdctl et, ctl4");
+  asm ("beq et, r0, SOFT_INT"); /* Interrupt is not external         */
+  asm ("subi ea, ea, 4");
 
   //Hardware Interrupt
   asm ("SKIP_EA_DEC:");
   SAVE_REGS;
-  asm (	"addi	fp,  sp, 128");
-  asm ( "mov r4, et")
-  asm (	"call	interrupt_handler");// Call the interrupt handler
+  asm ("addi fp, sp, 128");
+  asm ("mov r4, et")
+  asm ("call interrupt_handler");// Call the interrupt handler
   LOAD_REGS;
-  asm (	"addi	sp,  sp, 116");
-  asm (	"eret");
+  asm ("addi sp, sp, 116");
+  asm ("eret");
 
   //Software Interrupt - Trap OR Illegal Insruction(not handled)
   asm ("SOFT_INT:");
@@ -65,9 +65,8 @@ void the_isr (void)
   SET_KERNEL_SP;
   SET_KERNEL_FP;
   SET_KERNEL_SR;
-  
-  
-  asm (	"eret" );
+
+  asm ("eret");
 
   //System call exit - exit kernel, go to user
   asm ("SOFT_INT_EXIT:");
@@ -75,13 +74,12 @@ void the_isr (void)
   MOVE_ACTIVE_TO_SP;
   MOVE_ACTIVE_TO_SR;
   LOAD_REGS;
-  asm ( "addi sp,  sp, 116");
-  asm ( "eret" );    
+  asm ("addi sp, sp, 116");
+  asm ("eret");
 }
-
 
 #endif /* NATIVE */
 
 void interrupt_handler(int interrupt_mask) {
-    irq_dispatch(interrupt_mask);
+  irq_dispatch(interrupt_mask);
 }

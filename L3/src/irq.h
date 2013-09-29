@@ -21,6 +21,9 @@ typedef void (*irq_handler_routine)();
 typedef unsigned char IRQL;
 enum EIRQL{IRQL_LOW, IRQL_HIGH};
 
+// IRQ initialization
+void irq_init();
+
 // IRQL level routines
 void irql_raise(IRQL newirql, IRQL* oldirql);
 void irql_lower(IRQL* oldirql);
