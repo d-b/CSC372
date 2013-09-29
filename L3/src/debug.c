@@ -20,7 +20,7 @@
 
 #ifdef NATIVE
 
-void debugf(const char* format, ...)
+void printk(const char* format, ...)
 {
   
   while(*format != '\0') {
@@ -35,7 +35,7 @@ void debugf(const char* format, ...)
 
 #else /* NATIVE */
 
-void debugf(const char* format, ...)
+void printk(const char* format, ...)
 {
   va_list args;
   va_start (args, format);

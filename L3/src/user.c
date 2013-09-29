@@ -1,4 +1,5 @@
 #include "defines.h"
+#include "debug.h"
 #include "list.h"
 #include "user.h"
 #include "main.h"
@@ -40,7 +41,7 @@ void mymain()
 
   ret = SysCall(SYS_CREATE, 0x1234, 0, 0); 
   
-  debugf("DONE\n");
+  printk("DONE\n");
 
   while(1);
 }

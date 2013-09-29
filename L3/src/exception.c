@@ -5,8 +5,10 @@
  */
 
 #include "defines.h"
+#include "debug.h"
 #include "main.h"
 #include "kernel.h"
+#include "irq.h"
 
 #ifdef NATIVE
 /* The assembly language code below handles CPU reset processing */
@@ -42,6 +44,7 @@ void the_isr (void)
   asm ("SKIP_EA_DEC:");
   SAVE_REGS;
   asm (	"addi	fp,  sp, 128");
+  asm ( "mov r4, et")
   asm (	"call	interrupt_handler");// Call the interrupt handler
   LOAD_REGS;
   asm (	"addi	sp,  sp, 116");
@@ -79,7 +82,6 @@ void the_isr (void)
 
 #endif /* NATIVE */
 
-void interrupt_handler(void)
-{
-
+void interrupt_handler(int interrupt_mask) {
+    irq_dispatch(interrupt_mask);
 }

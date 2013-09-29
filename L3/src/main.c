@@ -1,4 +1,5 @@
 #include "defines.h"
+#include "debug.h"
 #include "list.h"
 #include "user.h"
 #include "kernel.h"

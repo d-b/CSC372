@@ -14,12 +14,20 @@ typedef enum { SYS_ENTER, SYS_EXIT } SysCallDir;
 typedef enum { RC_SUCCESS, RC_FAILED } RC;
 
 typedef int bool;
+
+#ifndef TRUE
 #define TRUE (bool)1
+#endif
+
+#ifndef FALSE
 #define FALSE (bool)0
+#endif
 
 #define _SUCCESS(rc) ((rc)==RC_SUCCESS)
 
+#ifndef NULL
 #define NULL (int)0
+#endif
 
 //User-mode, Interrupts Enabled
 #define DEFAULT_THREAD_SR 0x0003

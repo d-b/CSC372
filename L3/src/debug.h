@@ -4,4 +4,12 @@
  * Debugging helper routines
  */
 
-void debugf(const char* format, ...);
+#ifndef _DEBUG_H_
+#define _DEBUG_H_
+
+#include <assert.h>
+
+#define KASSERT(x) assert(x)
+void printk(const char* format, ...);
+
+#endif

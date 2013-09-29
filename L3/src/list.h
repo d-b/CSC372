@@ -32,13 +32,13 @@ struct type_LL
 
 struct type_TD
 {
-  TD * link;
+  TD* link;
   ThreadId tid;
   Registers regs;
   int priority;
   int waittime;
   RC returnCode;
-  LL * inlist;
+  LL* inlist;
 };
 
 TD* CreateTD(ThreadId tid);
@@ -46,7 +46,6 @@ void InitTD(TD* td, uval32 pc, uval32 sp, uval32 priority);
 RC DestroyTD(TD* td);
 
 RC InitList(ListType type, LL* list);
-RC DestroyList(LL* list);
 TD* DequeueHead(LL* list);
 RC PriorityEnqueue(TD* td, LL* list);
 RC EnqueueAtHead(TD* td, LL* list);

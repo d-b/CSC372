@@ -10,7 +10,9 @@
 
 int main(void) {
     int number_failed;
-    SRunner *sr = srunner_create(NULL);
+    SRunner *sr = srunner_create(make_lifo_suite());
+    srunner_add_suite(sr, make_priority_suite());
+    srunner_add_suite(sr, make_waitlist_suite());
     srunner_run_all(sr, CK_NORMAL);
     number_failed = srunner_ntests_failed(sr);
     srunner_free(sr);

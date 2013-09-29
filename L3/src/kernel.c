@@ -5,18 +5,22 @@
  */
 
 #include "defines.h"
+#include "debug.h"
 #include "list.h"
 #include "kernel.h"
+#include "irq.h"
 #include "main.h"
 
 #include <stdlib.h>
 #include <assert.h>
 
+IRQL InterruptLevel;
 TD *Active, Kernel;
 Stack KernelStack;
 
 void
 InitKernel(void) {
+  irq_init();
   Active = CreateTD(1);
   InitTD(Active, 0, 0, 1);  //Will be set with proper return registers on context switch
 #ifdef NATIVE
@@ -38,7 +42,7 @@ void K_SysCall( SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
     returnCode = CreateThread( arg0, arg1, arg2 ) ; 
     break ; 
   default:
-    debugf("Invalid SysCall type\n");
+    printk("Invalid SysCall type\n");
     returnCode = RC_FAILED;
     break;
   } 
@@ -51,7 +55,7 @@ void K_SysCall( SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
 RC CreateThread( uval32 pc, uval32 sp, uval32 priority ) 
 { 
   RC sysReturn = RC_SUCCESS;
-  debugf("CreateThread ");
+  printk("CreateThread ");
   return sysReturn;
 } 
 
@@ -62,7 +66,7 @@ Idle()
   int i; 
   while( 1 ) 
     { 
-      debugf( "CPU is idle\n" ); 
+      printk( "CPU is idle\n" ); 
       for( i = 0; i < MAX_THREADS; i++ ) 
 	{ 
 	} 

@@ -3,6 +3,7 @@
 
 #include "defines.h"
 #include "list.h"
+#include "irq.h"
 
 typedef struct type_STACK Stack;
 
@@ -12,6 +13,7 @@ struct type_STACK
 };
 
 extern TD *Active, Kernel;
+extern IRQL InterruptLevel;
 
 ThreadId CreateThread( uval32 pc, uval32 stackSize, uval32 priority );
 void Idle(void);

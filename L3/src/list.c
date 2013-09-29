@@ -5,6 +5,7 @@
  */
 
 #include "defines.h"
+#include "debug.h"
 #include "list.h"
 #include "main.h"
 
@@ -62,7 +63,11 @@ RC DestroyTD(TD* td) {
     return -1;
 }
 
-
+/*
+ * CreateTD
+ *
+ * Allocate and prepare a thread descriptor for initialization.
+ */
 TD* CreateTD(ThreadId tid)
 {
   TD* thread = AllocateTD();
@@ -79,12 +84,17 @@ TD* CreateTD(ThreadId tid)
     thread->regs.sp = 0;
     thread->regs.sr = 0;
   } else {
-    debugf("Failed to allocate new thread\n");
+    printk("Failed to allocate new thread\n");
   }
 
   return thread;
 }
 
+/*
+ * InitTD
+ *
+ * Initialize a thread descriptor.
+ */
 void InitTD(TD* td, uval32 pc, uval32 sp, uval32 priority) 
 { 
   if(td != NULL) {
@@ -93,7 +103,7 @@ void InitTD(TD* td, uval32 pc, uval32 sp, uval32 priority)
     td->regs.sr  = DEFAULT_THREAD_SR; 
     td->priority = priority; 
   } else {
-    debugf("Tried to initialize NULL pointer\n");
+    printk("Tried to initialize NULL pointer\n");
   }
 }
 
@@ -120,17 +130,6 @@ RC InitList(ListType type, LL* list) {
     // Initialize and return it
     list->head = NULL;
     list->type = type;
-    return 0;
-}
-
-/*
- * DestroyList
- *
- * Destroys list, whose pointer is passed in as an argument.
- * Returns 0 if successful, and -1 otherwise.
- */
-RC DestroyList(LL* list) {
-    free(list);
     return 0;
 }
 
