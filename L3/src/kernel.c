@@ -14,14 +14,28 @@
 #include <stdlib.h>
 #include <assert.h>
 
+//an always increasing thread id variable
+static ThreadId currtid = 1;
+
 IRQL InterruptLevel;
 TD *Active, Kernel;
 Stack KernelStack;
 
+LL * ReadyQ;
+LL * BlockedQ;
+
 void
 InitKernel(void) {
   irq_init();
-  Active = CreateTD(1);
+  
+  //Init queues
+  ReadyQ = malloC(sizeof(LL));
+  BlockedQ = malloC(sizeof(LL));
+  
+  InitList(L_PRIORITY, ReadyQ);
+  InitList(L_LIFO, BlockedQ);
+  
+  Active = CreateTD(getTid());
   InitTD(Active, 0, 0, 1);  //Will be set with proper return registers on context switch
 #ifdef NATIVE
   InitTD(&Kernel, (uval32) SysCallHandler, (uval32) &(KernelStack.stack[STACKSIZE]), 0);
@@ -73,30 +87,118 @@ void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
 #endif /* NATIVE */
 }
 
+//Return and then increment the Thread ID (a stupid way to ensure IDs are unique)
+ThreadId getTid() {
+  ThreadId ret = currtid;
+  currtid++;
+  return(ThreadId);
+}
+
 RC CreateThread(uval32 pc, uval32 sp, uval32 priority) { 
+  TD * td = CreateTD(getTid());
+  if (td == NULL)
+    return RC_FAILED;
+  InitTD(td, pc, sp, priority);
+  ReadyEnqueue(td);
   RC sysReturn = RC_SUCCESS;
-  printk("CreateThread ");
   return sysReturn;
 }
 
-RC SuspendThread(uval32 tid) {
+RC Suspend() {
+  if (BlockedEnqueue(Active) != RC_SUCCESS)
+    return RC_FAILED;
+  
+  Active = ReadyDequeue();
+  if (Active == NULL)
+    return RC_FAILED;
+    
   return RC_SUCCESS;
 }
 
-RC ResumeThread(uval32 tid) {
+RC ResumeThread(ThreadId tid) {
+  TD * td = BlockedGet(tid);
+  if (td == NULL)
+    return RC_FAILED;
+  if (ReadyEnqueue(td) != RC_SUCCESS);
+    return RC_FAILED;
+  if (Yield() != RC_SUCCESS)
+    return RC_FAILED;
   return RC_SUCCESS;
 }
 
-RC ChangeThreadPriority(uval32 priority) {
+RC ChangeThreadPriority( ThreadId tid, uval32 priority) {
+  TD * td;
+  if ((td = Active)->tid == tid || tid == 0) {
+    td->priority = priority;
+    
+  } else if ((td = ReadyGet(tid)) != NULL) {
+    td->priority = priority;
+    PriorityEnqueue(td);
+    
+  } else if ((td = BlockedGet(tid)) != NULL) {
+    td->priority = priority;
+    BlockedEnqueue(td);
+  } else 
+      return RC_FAILED;
   return RC_SUCCESS;
 }
 
 RC Yield(){
+  if (ReadyEnqueue(Active) != RC_SUCCESS) 
+    return RC_FAILED;
+  Active = ReadyDequeue();
   return RC_SUCCESS;
 }
 
-RC DestroyThread(uval32 tid) {
+RC DestroyThread(ThreadId tid) {
+  TD * td;
+  if ((td = Active)->tid == tid || tid == 0) {
+    Active = ReadyDequeue();
+  } else if ((td = ReadyGet(tid)) != NULL) {
+    
+  } else if ((td = BlockedGet(tid)) != NULL) {
+  
+  } else 
+      return RC_FAILED;
+      
+  if (DestroyTD(td) != RC_SUCCESS)
+    return RC_FAILED;
+    
   return RC_SUCCESS;
+}
+
+//Ready queue operations
+RC ReadyEnqueue(TD * td) {
+  return(PriorityEnqueue(td, ReadyQ));
+}
+
+TD * ReadyDequeue() {
+  return(DequeueHead(ReadyQ));
+}
+
+TD * ReadyGet(ThreadId tid) {
+  TD * td = FindTD(tid, ReadyQ);
+  if (td == NULL)
+    return NULL;
+
+  if (DequeueTD(td) == -1)
+    return NULL;
+  return(td);
+}
+
+//Blocked queue operations
+RC BlockedEnqueue(TD * td) {
+  return(EnqueueAtHead(td, BlockedQ));
+}
+
+TD * BlockedGet(ThreadId tid) {
+  TD * td = FindTD(tid, BlockedQ);
+  if (td == NULL)
+    return NULL;
+
+  if (DequeueTD(td) == -1)
+    return NULL;
+  return(td);
 }
 
 void 
