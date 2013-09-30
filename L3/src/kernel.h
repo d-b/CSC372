@@ -16,9 +16,9 @@ extern TD *Active, Kernel;
 extern IRQL InterruptLevel;
 
 RC CreateThread(uval32 pc, uval32 sp, uval32 priority);
-RC Suspend();
+RC SuspendThread(uval32 tid);
 RC ResumeThread(uval32 tid);
-RC ChangeThreadPriority(uval32 tid, uval32 priority);
+RC ChangeThreadPriority(uval32 priority);
 RC Yield();
 RC DestroyThread(uval32 tid);
 
