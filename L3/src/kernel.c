@@ -183,16 +183,13 @@ RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
   status = ReadyThread(td);
   if(!_SUCCESS(status)) { IRQL_LOWER; return status; }
 
-  /// See if we need to yield
-  int yield = (td->priority < Active->priority);
+  // See if we need to yield
+  if(td->priority < Active->priority) Yield();
 
   IRQL_LOWER;
   /////////////////////////////
   // Critical section ends 
   /////////////////////////////
-  
-  // Yield the active process if it has lower priority
-  if(yield) Yield();
 
   // All operations completed successfully
   return RC_SUCCESS;
@@ -229,16 +226,13 @@ RC ResumeThread(uval32 tid) {
   status = ReadyThread(td);
   if(!_SUCCESS(status)) { IRQL_LOWER; return status; }
 
-  /// See if we need to yield
-  int yield = (td->priority < Active->priority);
+  // See if we need to yield
+  if(td->priority < Active->priority) Yield();
 
   IRQL_LOWER;
   /////////////////////////////
   // Critical section ends 
   /////////////////////////////
-
-  // Yield the active process if it has lower priority
-  if(yield) Yield();  
 
   // All operations completed successfully
   return RC_SUCCESS;  
@@ -272,17 +266,16 @@ RC ChangeThreadPriority(uval32 tid, uval32 priority) {
   // Change priority
   td->priority = priority;
 
-  /// See if we need to yield
-  int yield = (td->priority < Active->priority);
+  // Ready thread if necessary
+  if(makeready) ReadyThread(td);  
+
+  // See if we need to yield
+  if(td->priority < Active->priority) Yield();
 
   IRQL_LOWER;
   /////////////////////////////
   // Critical section ends 
   /////////////////////////////
-
-  // Ready & potentially yield to target thread
-  if(makeready) ReadyThread(td);
-  if(yield) Yield();
 
   // All operations completed successfully
   return RC_SUCCESS;
