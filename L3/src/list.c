@@ -75,6 +75,7 @@ TD* CreateTD(ThreadId tid)
     if(thread != NULL) {
         thread->link = NULL;
         thread->tid = tid;
+        thread->state = 0;
         thread->priority = 0;
         thread->waittime = 0;
         thread->inlist = NULL;

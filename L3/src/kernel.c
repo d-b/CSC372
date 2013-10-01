@@ -31,17 +31,20 @@ InitKernel(void) {
   // Initialize initial task & exception task
   Active = CreateTD(GetTid());
   InitTD(Active, 0, 0, 1);  //Will be set with proper return registers on context switch
-  Active->state = S_ACTIVE;  
+  Active->state = S_ACTIVE;
 #ifdef NATIVE
   InitTD(&Kernel, (uval32) SysCallHandler, (uval32) &(KernelStack.stack[STACKSIZE]), 0);
   Kernel.regs.sr = DEFAULT_KERNEL_SR;
 #endif /* NATIVE */
+
+  // Add idle task
+  CreateThread((uval32) &Idle, (uval32) malloc(STACKSIZE), 0x7FFFFFFF);
 }
 
 static void SwapThread(ThreadState newstate) {
   /////////////////////////////
   // Critical section starts
-  /////////////////////////////  
+  /////////////////////////////
   IRQL_RAISE_TO_HIGH;
 
   // Operation status
@@ -76,11 +79,31 @@ static void SwapThread(ThreadState newstate) {
   // Get next ready thread
   Active = DequeueHead(&Ready);
   if(!Active) panic("Could not find next ready thread!\n");
+  Active->state = S_ACTIVE;
 
   IRQL_LOWER;
   /////////////////////////////
   // Critical section ends
   /////////////////////////////
+}
+
+static RC ReadyThread(TD* td) {
+  /////////////////////////////
+  // Critical section starts
+  /////////////////////////////
+  IRQL_RAISE_TO_HIGH;
+
+  RC status = PriorityEnqueue(td, &Ready);
+  if(!_SUCCESS(status)) panic("Could not place thread on ready queue!\n");
+  td->state = S_READY;
+
+  IRQL_LOWER;
+  /////////////////////////////
+  // Critical section ends
+  /////////////////////////////
+
+  // Return the result
+  return status;
 }
 
 void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
@@ -157,7 +180,7 @@ RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
   #endif
 
   // Add it to the ready queue
-  status = PriorityEnqueue(td, &Ready);
+  status = ReadyThread(td);
   if(!_SUCCESS(status)) { IRQL_LOWER; return status; }
 
   /// See if we need to yield
@@ -200,11 +223,11 @@ RC ResumeThread(uval32 tid) {
 
   // Remove TD from blocked queue
   status = DequeueTD(td);
-  if(!_SUCCESS(status)) { IRQL_LOWER; return RC_FAILED; }
+  if(!_SUCCESS(status)) { IRQL_LOWER; return status; }
 
-  // Add TD to ready queue
-  status = PriorityEnqueue(td, &Ready);
-  if(!_SUCCESS(status)) { IRQL_LOWER; return RC_FAILED; }
+  // Make thread ready
+  status = ReadyThread(td);
+  if(!_SUCCESS(status)) { IRQL_LOWER; return status; }
 
   /// See if we need to yield
   int yield = (td->priority < Active->priority);
@@ -245,7 +268,8 @@ RC DestroyThread(uval32 tid) {
   DestroyTD(td);
   if(td == Active) {
     Active = DequeueHead(&Ready);
-    if(!Active) panic("Destroyed last ready thread!\n");    
+    if(!Active) panic("Destroyed last ready thread!\n");
+    Active->state = S_ACTIVE;
   }
 
   IRQL_LOWER;
@@ -260,19 +284,11 @@ RC DestroyThread(uval32 tid) {
 void 
 Idle() 
 { 
-  /*
-  int i; 
-  while( 1 ) 
-    { 
-      printk( "CPU is idle\n" ); 
-      for( i = 0; i < MAX_THREADS; i++ ) 
-	{ 
-	} 
-      Yield(); 
-    } 
-  */
+  while(1) {
+    printk("IDLE\n");
+    Yield();
+  }
 }
-
 
 //
 // Non-native context switching support
