@@ -14,19 +14,73 @@
 #include <stdlib.h>
 #include <assert.h>
 
-IRQL InterruptLevel;
-TD *Active, Kernel;
-Stack KernelStack;
+IRQL InterruptLevel; // Current interrupt servicing level
+TD *Active, Kernel;  // Active & kernel tasks
+Stack KernelStack;   // Kernel mode stack
+LL Ready, Blocked;   // Thread lists
 
 void
 InitKernel(void) {
+  // Initialize interrupt handling
   irq_init();
-  Active = CreateTD(1);
+
+  // Initialize thread lists
+  InitList(L_PRIORITY, &Ready);
+  InitList(L_LIFO, &Blocked);
+
+  // Initialize initial task & exception task
+  Active = CreateTD(GetTid());
   InitTD(Active, 0, 0, 1);  //Will be set with proper return registers on context switch
+  Active->state = S_ACTIVE;  
 #ifdef NATIVE
   InitTD(&Kernel, (uval32) SysCallHandler, (uval32) &(KernelStack.stack[STACKSIZE]), 0);
   Kernel.regs.sr = DEFAULT_KERNEL_SR;
 #endif /* NATIVE */
+}
+
+static void SwapThread(ThreadState newstate) {
+  /////////////////////////////
+  // Critical section starts
+  /////////////////////////////  
+  IRQL_RAISE_TO_HIGH;
+
+  // Operation status
+  RC status;
+
+  switch(newstate) {
+    // Should never occur
+    case S_ACTIVE:
+      panic("Invalid thread state change requested!");
+      break;
+
+    // Place thread on ready queue
+    case S_READY: {
+      status = PriorityEnqueue(Active, &Ready);
+      if(!_SUCCESS(status))
+        panic("Could not place current thread on ready queue!");
+      break;
+    }
+
+    // Place thread on blocking queue
+    case S_SLEEP: {
+      status = EnqueueAtHead(Active, &Blocked);
+      if(!_SUCCESS(status))
+        panic("Could not place current thread on blocked queue!");
+      break;
+    }
+  }
+
+  // Set new state for current thread
+  Active->state = newstate;
+
+  // Get next ready thread
+  Active = DequeueHead(&Ready);
+  if(!Active) panic("Could not find next ready thread!");
+
+  IRQL_LOWER;
+  /////////////////////////////
+  // Critical section ends
+  /////////////////////////////
 }
 
 void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
@@ -43,7 +97,7 @@ void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
     break;
 
     case SYS_SUSPEND:
-    returnCode = SuspendThread(arg0);
+    returnCode = Suspend();
     break;
 
     case SYS_RESUME:
@@ -51,7 +105,7 @@ void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
     break;
 
     case SYS_CHANGEPRIORITY:
-    returnCode = ChangeThreadPriority(arg0);
+    returnCode = ChangeThreadPriority(arg0, arg1);
     break;
 
     case SYS_YIELD:
@@ -73,30 +127,115 @@ void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
 #endif /* NATIVE */
 }
 
-RC CreateThread(uval32 pc, uval32 sp, uval32 priority) { 
-  RC sysReturn = RC_SUCCESS;
-  printk("CreateThread ");
-  return sysReturn;
-}
+RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
+  // Operation status
+  RC status;
 
-RC SuspendThread(uval32 tid) {
-  return RC_SUCCESS;
-}
+  /////////////////////////////
+  // Critical section starts
+  /////////////////////////////
+  IRQL_RAISE_TO_HIGH;
 
-RC ResumeThread(uval32 tid) {
-  return RC_SUCCESS;
-}
+  // Create a new thread descriptor
+  TD* td = CreateTD(GetTid());
+  if(!td) { IRQL_LOWER; return RC_FAILED; }
 
-RC ChangeThreadPriority(uval32 priority) {
+  // Initialize it with the user passed program counter, stack pointer & priority
+  InitTD(td, pc, sp, priority);
+
+  // Add it to the ready queue
+  status = PriorityEnqueue(td, &Ready);
+  if(!_SUCCESS(status)) { IRQL_LOWER; return status; }
+
+  /// See if we need to yield
+  int yield = (td->priority < Active->priority);
+
+  IRQL_LOWER;
+  /////////////////////////////
+  // Critical section ends 
+  /////////////////////////////
+  
+  // Yield the active process if it has lower priority
+  if(yield) Yield();
+
+  // All operations completed successfully
   return RC_SUCCESS;
 }
 
 RC Yield(){
+  SwapThread(S_READY);
+  return RC_SUCCESS;
+}
+
+RC Suspend() {
+  SwapThread(S_SLEEP);
+  return RC_SUCCESS;
+}
+
+RC ResumeThread(uval32 tid) {
+  /////////////////////////////
+  // Critical section starts
+  /////////////////////////////
+  IRQL_RAISE_TO_HIGH;
+
+  // Attempt to find thread by id on blocked queue
+  TD* td = FindTD(tid, &Blocked);
+  if(!td) { IRQL_LOWER; return RC_FAILED; }
+
+  // Remove TD from blocked queue
+  RC status = DequeueTD(td);
+  if(!_SUCCESS(status)) { IRQL_LOWER; return RC_FAILED; }
+
+  /// See if we need to yield
+  int yield = (td->priority < Active->priority);
+
+  IRQL_LOWER;
+  /////////////////////////////
+  // Critical section ends 
+  /////////////////////////////
+
+  // Yield the active process if it has lower priority
+  if(yield) Yield();  
+
+  // All operations completed successfully
+  return RC_SUCCESS;  
+}
+
+RC ChangeThreadPriority(uval32 tid, uval32 priority) {
   return RC_SUCCESS;
 }
 
 RC DestroyThread(uval32 tid) {
-  return RC_SUCCESS;
+  /////////////////////////////
+  // Critical section starts
+  /////////////////////////////
+  IRQL_RAISE_TO_HIGH;
+
+  // Find target TD
+  TD* td = NULL;
+  if(tid != 0) {
+    td = FindTD(tid, &Ready);
+    if(!td) td = FindTD(tid, &Blocked);
+  } else td = Active;
+
+  // Abort if no TD found
+  if(!td) { IRQL_LOWER; return RC_FAILED; }
+  
+
+  // Cleanup and switch threads if necessary
+  DestroyTD(td);
+  if(td == Active) {
+    Active = DequeueHead(&Ready);
+    if(!Active) panic("Destroyed last ready thread!");    
+  }
+
+  IRQL_LOWER;
+  /////////////////////////////
+  // Critical section ends 
+  /////////////////////////////
+
+  // All operations completed successfully
+  return RC_SUCCESS;  
 }
 
 void 

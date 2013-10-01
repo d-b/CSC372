@@ -10,8 +10,10 @@
 #include "defines.h"
 
 typedef enum {UNDEF, L_PRIORITY, L_LIFO, L_WAITING} ListType ;
+typedef enum {S_ACTIVE, S_READY, S_SLEEP} ThreadState ;
 
 #define MIN_PRIORITY 100
+#define MAX_THREADID 0x7FFFFFFF
 
 typedef struct type_LL LL;
 typedef struct type_TD TD;
@@ -35,6 +37,7 @@ struct type_TD
   TD* link;
   ThreadId tid;
   Registers regs;
+  ThreadState state;
   int priority;
   int waittime;
   RC returnCode;
@@ -50,7 +53,10 @@ TD* DequeueHead(LL* list);
 RC PriorityEnqueue(TD* td, LL* list);
 RC EnqueueAtHead(TD* td, LL* list);
 RC WaitlistEnqueue(TD* td, int waittime, LL* list);
-TD* FindTD(ThreadId pid, LL *list);
+TD* FindTD(ThreadId tid, LL *list);
 RC DequeueTD(TD *td);
+
+ThreadId GetTid();
+void FreeTid(ThreadId);
 
 #endif

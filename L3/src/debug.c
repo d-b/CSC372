@@ -13,34 +13,19 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdarg.h>
-
-#ifndef NATIVE
 #include <stdio.h>
-#endif /* NATIVE */
 
-#ifdef NATIVE
-
-void printk(const char* format, ...)
-{
-  
-  while(*format != '\0') {
-    
-    if((*JTAG_UART_CONTROL)&0xffff0000 ) {
-      
-      *JTAG_UART_DATA = (*format++);
-      
-    }
-  }
+void printk(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
 }
 
-#else /* NATIVE */
-
-void printk(const char* format, ...)
-{
-  va_list args;
-  va_start (args, format);
-  vprintf (format, args);
-  va_end (args);
+void panic(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
+    exit(-1);
 }
-
-#endif /* NATIVE */

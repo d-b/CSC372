@@ -11,5 +11,6 @@
 
 #define KASSERT(x) assert(x)
 void printk(const char* format, ...);
+void panic(const char* format, ...);
 
 #endif

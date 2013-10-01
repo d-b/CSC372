@@ -17,7 +17,7 @@
 
 static struct {
     int next_thread, // next thread to allocate
-        next_free;    // next free thread (1-indexed)
+        next_free;   // next free thread (1-indexed)
 
     TD thread[MAX_THREADS];
     int freelist[MAX_THREADS];
@@ -55,6 +55,7 @@ RC DestroyTD(TD* td) {
     for(int i = 0; i < MAX_THREADS; i++) {
         if(&_threads.thread[i] == td) {
             _threads.freelist[_threads.next_free++] = i;
+            td->tid = 0;
             return 0;
         }
     }
@@ -70,24 +71,24 @@ RC DestroyTD(TD* td) {
  */
 TD* CreateTD(ThreadId tid)
 {
-  TD* thread = AllocateTD();
+    TD* thread = AllocateTD();
 
-  if(thread != NULL) {
-    thread->link = NULL;
-    thread->tid = tid;
-    thread->priority = 0;
-    thread->waittime = 0;
-    thread->inlist = NULL;
-    thread->returnCode = 0;
+    if(thread != NULL) {
+        thread->link = NULL;
+        thread->tid = tid;
+        thread->priority = 0;
+        thread->waittime = 0;
+        thread->inlist = NULL;
+        thread->returnCode = 0;
 
-    thread->regs.pc = 0;
-    thread->regs.sp = 0;
-    thread->regs.sr = 0;
-  } else {
-    printk("Failed to allocate new thread\n");
-  }
+        thread->regs.pc = 0;
+        thread->regs.sp = 0;
+        thread->regs.sr = 0;
+    } else {
+        printk("Failed to allocate new thread\n");
+    }
 
-  return thread;
+    return thread;
 }
 
 /*
@@ -97,14 +98,14 @@ TD* CreateTD(ThreadId tid)
  */
 void InitTD(TD* td, uval32 pc, uval32 sp, uval32 priority) 
 { 
-  if(td != NULL) {
-    td->regs.pc  = pc; 
-    td->regs.sp = sp; 
-    td->regs.sr  = DEFAULT_THREAD_SR; 
-    td->priority = priority; 
-  } else {
-    printk("Tried to initialize NULL pointer\n");
-  }
+    if(td != NULL) {
+        td->regs.pc  = pc; 
+        td->regs.sp = sp; 
+        td->regs.sr  = DEFAULT_THREAD_SR; 
+        td->priority = priority; 
+    } else {
+        printk("Tried to initialize NULL pointer\n");
+    }
 }
 
 /*
@@ -274,4 +275,61 @@ RC DequeueTD(TD *td) {
     prev->link = td->link;
     td->inlist = NULL;
     return 0;
+}
+
+//
+// Thread id management
+//
+
+static struct {
+    unsigned int
+        range_start,
+        range_end;
+} _tid = {1};
+
+// Find largest range of free TIDs
+static void RefreshTids() {
+    // Candidate range
+    unsigned int
+        range_start = 0,
+        range_end = 0;
+
+    // The last found TID
+    unsigned int lasttid = 0;
+    
+    // Scan threads
+    int i;
+    for(i = 0; i < MAX_THREADS; i++) {
+        // Skip over invalid threads
+        unsigned int tid = _threads.thread[i].tid;
+        if(!tid) continue;
+
+        // Current distance
+        unsigned int olddist = range_end - range_start;
+        unsigned int newdist = tid - lasttid - 1;
+        if(newdist > olddist) {
+            range_start = lasttid + 1;
+            range_end = tid;
+        }
+    }
+
+    // If no TID was found expand to entire range
+    if(!lasttid) {
+        range_start = 1;
+        range_end = ((unsigned int) MAX_THREADID) + 1;
+    }
+
+    // Set new range
+    _tid.range_start = range_start;
+    _tid.range_end = range_end;
+}
+
+// Get free thread id
+ThreadId GetTid() {
+    // Refresh range if necessary
+    if(_tid.range_start >= _tid.range_end) RefreshTids();
+    if(_tid.range_start >= _tid.range_end) panic("No free thread ids!");
+
+    // Return next free TID
+    return _tid.range_start++;
 }

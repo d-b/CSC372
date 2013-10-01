@@ -9,10 +9,10 @@
 
 // Helper macros
 #define IRQL_RAISE_TO_HIGH \
-    { IRQL oldirql; \
-      irql_raise(IRQL_HIGH, &oldirql);
+    IRQL _irql_raise_to_high_oldirql; \
+    irql_raise(IRQL_HIGH, &_irql_raise_to_high_oldirql);
 #define IRQL_LOWER \
-      irql_lower(&oldirql); }
+      irql_lower(&_irql_raise_to_high_oldirql);
 
 // IRQ handler routine
 typedef void (*irq_handler_routine)();
