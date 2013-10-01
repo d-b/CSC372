@@ -35,17 +35,39 @@ RC SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
   return returnCode; 
 }
 
-void thread() {
-  printk("THREAD\n");
+void thread1() {
+  while(1) {
+    printk("THREAD #1\n");
+    SysCall(SYS_YIELD, 0, 0, 0);
+  }
+}
+
+void thread2() {
+  while(1) {
+    printk("THREAD #2\n");
+    SysCall(SYS_YIELD, 0, 0, 0);
+  }
+}
+
+void thread3() {
+  while(1) {
+    printk("THREAD #3\n");
+    SysCall(SYS_YIELD, 0, 0, 0);
+  }
+}
+
+void thread4() {
+  while(1) {
+    printk("THREAD #4\n");
+    SysCall(SYS_YIELD, 0, 0, 0);
+  }
 }
 
 void mymain() 
 { 
-  RC ret;
-
-  ret = SysCall(SYS_CREATE, (uval32) &thread, 0, 0);
-  
-  printk("DONE\n");
-
-  while(1);
+  SysCall(SYS_CREATE, (uval32) &thread1, 0, 1);
+  SysCall(SYS_CREATE, (uval32) &thread2, 0, 1);
+  SysCall(SYS_CREATE, (uval32) &thread3, 0, 1);
+  SysCall(SYS_CREATE, (uval32) &thread4, 0, 1);
+  SysCall(SYS_SUSPEND, 0, 0, 0);
 }

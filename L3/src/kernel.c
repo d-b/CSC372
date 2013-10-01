@@ -128,13 +128,13 @@ void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
 }
 
 RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
-  // Operation status
-  RC status;
-
   /////////////////////////////
   // Critical section starts
   /////////////////////////////
   IRQL_RAISE_TO_HIGH;
+
+  // Operation status
+  RC status;
 
   // Create a new thread descriptor
   TD* td = CreateTD(GetTid());
@@ -191,12 +191,19 @@ RC ResumeThread(uval32 tid) {
   /////////////////////////////
   IRQL_RAISE_TO_HIGH;
 
+  // Operation status
+  RC status;
+
   // Attempt to find thread by id on blocked queue
   TD* td = FindTD(tid, &Blocked);
   if(!td) { IRQL_LOWER; return RC_FAILED; }
 
   // Remove TD from blocked queue
-  RC status = DequeueTD(td);
+  status = DequeueTD(td);
+  if(!_SUCCESS(status)) { IRQL_LOWER; return RC_FAILED; }
+
+  // Add TD to ready queue
+  status = PriorityEnqueue(td, &Ready);
   if(!_SUCCESS(status)) { IRQL_LOWER; return RC_FAILED; }
 
   /// See if we need to yield
