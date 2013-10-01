@@ -27,4 +27,8 @@ void Idle(void);
 void K_SysCall( SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2);
 extern void SysCallHandler(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2);
 
+#ifndef NATIVE
+void U_VirtualSysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2);
+#endif
+
 #endif

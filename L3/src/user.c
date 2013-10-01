@@ -28,18 +28,24 @@ RC SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
 	       : : "m" (sysMode), "m" (type), "m" (arg0), "m" (arg1), "m" (arg2)
 	       : "r4", "r5", "r6", "r7", "r8");  
 #else /* NATIVE */
-  CreateThread(arg0, arg1, arg2); //Kernel system call - not normally accessible from user space
+  U_VirtualSysCall(type, arg0, arg1, arg2);
 #endif /* NATIVE */
   
   returnCode = RC_SUCCESS; //Change this code to take the actual return value
   return returnCode; 
-} 
+}
+
+void thread() {
+  printk("THREAD\n");
+  SysCall(SYS_YIELD, 0, 0, 0);
+}
 
 void mymain() 
 { 
   RC ret;
 
-  ret = SysCall(SYS_CREATE, 0x1234, 0, 0); 
+  ret = SysCall(SYS_CREATE, (uval32) &thread, 0, 1);
+  SysCall(SYS_YIELD, 0, 0, 0);
   
   printk("DONE\n");
 

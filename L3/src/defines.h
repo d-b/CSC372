@@ -4,9 +4,15 @@
 //comment out to compile on x86
 //#define NATIVE
 
-typedef unsigned char  uval8;
-typedef unsigned int   uval32;
-typedef uval32 ThreadId; 
+#ifdef NATIVE
+typedef unsigned char uval8;
+typedef unsigned int uval32;
+typedef uval32 ThreadId;
+#else
+typedef unsigned char uval8;
+typedef unsigned long long uval32;
+typedef uval32 ThreadId;
+#endif
 
 typedef enum { SYS_CREATE, SYS_SUSPEND, SYS_RESUME, SYS_YIELD, SYS_CHANGEPRIORITY, SYS_DESTROY } SysCallType;
 typedef enum { SYS_ENTER, SYS_EXIT } SysCallDir; 

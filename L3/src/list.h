@@ -9,6 +9,12 @@
 
 #include "defines.h"
 
+#ifndef NATIVE
+#include <stdlib.h>
+#include <asm/signal.h>
+#include <ucontext.h>
+#endif
+
 typedef enum {UNDEF, L_PRIORITY, L_LIFO, L_WAITING} ListType ;
 typedef enum {S_ACTIVE, S_READY, S_SLEEP} ThreadState ;
 
@@ -42,6 +48,9 @@ struct type_TD
   int waittime;
   RC returnCode;
   LL* inlist;
+  
+  // Non-native context switching support
+  ucontext_t context;
 };
 
 TD* CreateTD(ThreadId tid);

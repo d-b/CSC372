@@ -143,6 +143,14 @@ RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
   // Initialize it with the user passed program counter, stack pointer & priority
   InitTD(td, pc, sp, priority);
 
+  // Setup non-native context
+  #ifndef NATIVE
+    getcontext(&td->context);
+    td->context.uc_stack.ss_sp = malloc(1024*1024);
+    td->context.uc_stack.ss_size = 1024*1024;
+    makecontext(&td->context, (void (*)()) pc, 0);
+  #endif
+
   // Add it to the ready queue
   status = PriorityEnqueue(td, &Ready);
   if(!_SUCCESS(status)) { IRQL_LOWER; return status; }
@@ -252,4 +260,31 @@ Idle()
       Yield(); 
     } 
   */
-} 
+}
+
+
+//
+// Non-native context switching support
+//
+
+#ifndef NATIVE
+
+enum EJumpStatus { JUMP_FallThrough, JUMP_Exit };
+
+void U_VirtualSysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2) {
+  // Jump status
+  volatile int status = JUMP_FallThrough;
+
+  // Save the context
+  getcontext(&Active->context);
+  if(status != JUMP_FallThrough) return;
+  status = JUMP_Exit;
+
+  // Call K_SysCall
+  K_SysCall(type, arg0, arg1, arg2);
+
+  // Switch to active thread
+  setcontext(&Active->context);
+}
+
+#endif
