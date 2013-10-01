@@ -146,8 +146,8 @@ RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
   // Setup non-native context
   #ifndef NATIVE
     getcontext(&td->context);
-    td->context.uc_stack.ss_sp = malloc(1024*1024);
-    td->context.uc_stack.ss_size = 1024*1024;
+    td->context.uc_stack.ss_sp = malloc(STACKSIZE);
+    td->context.uc_stack.ss_size = STACKSIZE;
     makecontext(&td->context, (void (*)()) pc, 0);
   #endif
 
