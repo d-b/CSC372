@@ -281,14 +281,8 @@ RC DestroyThread(uval32 tid) {
   return RC_SUCCESS;  
 }
 
-void 
-Idle() 
-{ 
-  while(1) {
-    printk("IDLE\n");
-    Yield();
-  }
-}
+// Idle thread
+void Idle() { while(1) Yield(); }
 
 //
 // Non-native context switching support
