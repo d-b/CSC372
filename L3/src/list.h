@@ -50,7 +50,10 @@ struct type_TD
   LL* inlist;
   
   // Non-native context switching support
-  ucontext_t context;
+  #ifndef NATIVE
+    ucontext_t context;
+    ucontext_t context_outer;
+  #endif
 };
 
 TD* CreateTD(ThreadId tid);

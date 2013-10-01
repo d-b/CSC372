@@ -145,7 +145,12 @@ RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
 
   // Setup non-native context
   #ifndef NATIVE
+    getcontext(&td->context_outer);
+    td->context_outer.uc_stack.ss_sp = malloc(STACKSIZE);
+    td->context_outer.uc_stack.ss_size = STACKSIZE;
+    makecontext(&td->context_outer, (void (*)()) U_ThreadExit, 0);
     getcontext(&td->context);
+    td->context.uc_link = &td->context_outer;
     td->context.uc_stack.ss_sp = malloc(STACKSIZE);
     td->context.uc_stack.ss_size = STACKSIZE;
     makecontext(&td->context, (void (*)()) pc, 0);
@@ -228,7 +233,6 @@ RC DestroyThread(uval32 tid) {
 
   // Abort if no TD found
   if(!td) { IRQL_LOWER; return RC_FAILED; }
-  
 
   // Cleanup and switch threads if necessary
   DestroyTD(td);
@@ -285,6 +289,10 @@ void U_VirtualSysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2) {
 
   // Switch to active thread
   setcontext(&Active->context);
+}
+
+void U_ThreadExit(void) {
+  U_VirtualSysCall(SYS_DESTROY, 0, 0, 0);
 }
 
 #endif

@@ -29,6 +29,7 @@ extern void SysCallHandler(SysCallType type, uval32 arg0, uval32 arg1, uval32 ar
 
 #ifndef NATIVE
 void U_VirtualSysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2);
+void U_ThreadExit(void);
 #endif
 
 #endif
