@@ -31,8 +31,7 @@ static struct {
 static TD* AllocateTD() {
     // See if we have a free thread
     if(_threads.next_free) {
-        _threads.next_free -= 1;
-        int freetd = _threads.freelist[_threads.next_free - 1];
+        int freetd = _threads.freelist[--_threads.next_free];
         return &_threads.thread[freetd];
     }
 
