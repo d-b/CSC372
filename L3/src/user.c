@@ -56,18 +56,10 @@ void thread3() {
   }
 }
 
-void thread4() {
-  while(1) {
-    printk("THREAD #4\n");
-    SysCall(SYS_YIELD, 0, 0, 0);
-  }
-}
-
 void mymain() 
 { 
   SysCall(SYS_CREATE, (uval32) &thread1, 0, 1);
   SysCall(SYS_CREATE, (uval32) &thread2, 0, 1);
   SysCall(SYS_CREATE, (uval32) &thread3, 0, 1);
-  SysCall(SYS_CREATE, (uval32) &thread4, 0, 1);
   SysCall(SYS_SUSPEND, 0, 0, 0);
 }

@@ -245,6 +245,46 @@ RC ResumeThread(uval32 tid) {
 }
 
 RC ChangeThreadPriority(uval32 tid, uval32 priority) {
+  /////////////////////////////
+  // Critical section starts
+  /////////////////////////////
+  IRQL_RAISE_TO_HIGH;
+
+  // Make target thread ready again
+  int makeready = 0;
+
+  // Find target TD
+  TD* td = NULL;
+  if(tid == 0 || Active->tid == tid)
+    td = Active;
+  else {
+    // If thread is in ready queue
+    td = FindTD(tid, &Ready);
+    if(td) { DequeueTD(td); makeready = TRUE; }
+    
+    // Check for thread in blocked queue
+    if(!td) td = FindTD(tid, &Blocked);
+  }
+
+  // Abort if no TD found
+  if(!td) { IRQL_LOWER; return RC_FAILED; }
+
+  // Change priority
+  td->priority = priority;
+
+  /// See if we need to yield
+  int yield = (td->priority < Active->priority);
+
+  IRQL_LOWER;
+  /////////////////////////////
+  // Critical section ends 
+  /////////////////////////////
+
+  // Ready & potentially yield to target thread
+  if(makeready) ReadyThread(td);
+  if(yield) Yield();
+
+  // All operations completed successfully
   return RC_SUCCESS;
 }
 
@@ -259,12 +299,14 @@ RC DestroyThread(uval32 tid) {
   if(tid != 0) {
     td = FindTD(tid, &Ready);
     if(!td) td = FindTD(tid, &Blocked);
+    if(Active->tid == tid) td = Active;
   } else td = Active;
 
   // Abort if no TD found
   if(!td) { IRQL_LOWER; return RC_FAILED; }
 
   // Cleanup and switch threads if necessary
+  DequeueTD(td);
   DestroyTD(td);
   if(td == Active) {
     Active = DequeueHead(&Ready);
