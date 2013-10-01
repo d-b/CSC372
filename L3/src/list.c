@@ -328,7 +328,7 @@ static void RefreshTids() {
 ThreadId GetTid() {
     // Refresh range if necessary
     if(_tid.range_start >= _tid.range_end) RefreshTids();
-    if(_tid.range_start >= _tid.range_end) panic("No free thread ids!");
+    if(_tid.range_start >= _tid.range_end) panic("No free thread ids!\n");
 
     // Return next free TID
     return _tid.range_start++;

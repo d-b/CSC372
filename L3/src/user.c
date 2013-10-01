@@ -37,7 +37,6 @@ RC SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
 
 void thread() {
   printk("THREAD\n");
-  //SysCall(SYS_SUSPEND, 0, 0, 0);
 }
 
 void mymain() 

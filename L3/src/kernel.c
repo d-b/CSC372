@@ -50,14 +50,14 @@ static void SwapThread(ThreadState newstate) {
   switch(newstate) {
     // Should never occur
     case S_ACTIVE:
-      panic("Invalid thread state change requested!");
+      panic("Invalid thread state change requested!\n");
       break;
 
     // Place thread on ready queue
     case S_READY: {
       status = PriorityEnqueue(Active, &Ready);
       if(!_SUCCESS(status))
-        panic("Could not place current thread on ready queue!");
+        panic("Could not place current thread on ready queue!\n");
       break;
     }
 
@@ -65,7 +65,7 @@ static void SwapThread(ThreadState newstate) {
     case S_SLEEP: {
       status = EnqueueAtHead(Active, &Blocked);
       if(!_SUCCESS(status))
-        panic("Could not place current thread on blocked queue!");
+        panic("Could not place current thread on blocked queue!\n");
       break;
     }
   }
@@ -75,7 +75,7 @@ static void SwapThread(ThreadState newstate) {
 
   // Get next ready thread
   Active = DequeueHead(&Ready);
-  if(!Active) panic("Could not find next ready thread!");
+  if(!Active) panic("Could not find next ready thread!\n");
 
   IRQL_LOWER;
   /////////////////////////////
@@ -238,7 +238,7 @@ RC DestroyThread(uval32 tid) {
   DestroyTD(td);
   if(td == Active) {
     Active = DequeueHead(&Ready);
-    if(!Active) panic("Destroyed last ready thread!");    
+    if(!Active) panic("Destroyed last ready thread!\n");    
   }
 
   IRQL_LOWER;
