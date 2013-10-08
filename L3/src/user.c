@@ -59,7 +59,7 @@ void thread3() {
 void mymain() 
 { 
   SysCall(SYS_CREATE, (uval32) &thread1, (uval32) malloc(STACKSIZE), 1);
-  SysCall(SYS_CREATE, (uval32) &thread2, (uval32) malloc(STACKSIZE), 5);
-  SysCall(SYS_CREATE, (uval32) &thread3, (uval32) malloc(STACKSIZE), 2);
+  SysCall(SYS_CREATE, (uval32) &thread2, (uval32) malloc(STACKSIZE), 1);
+  SysCall(SYS_CREATE, (uval32) &thread3, (uval32) malloc(STACKSIZE), 1);
   SysCall(SYS_SUSPEND, 0, 0, 0);
 }
