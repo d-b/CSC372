@@ -173,14 +173,14 @@ RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
 
   
   #ifdef NATIVE
-  // Setup native context
+    // Setup native context
     TrapFrame* tf = (TrapFrame*) (sp + 4);
     memset(tf, 0, sizeof(TrapFrame));
     asm volatile("stw r26, %0" : "=m"(tf->gp));
     tf->sr = DEFAULT_THREAD_SR;
     tf->ea = pc;
   #else
-  // Setup non-native context
+    // Setup non-native context
     getcontext(&td->context_outer);
     td->context_outer.uc_stack.ss_sp = malloc(STACKSIZE);
     td->context_outer.uc_stack.ss_size = STACKSIZE;
