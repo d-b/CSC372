@@ -10,6 +10,7 @@
 #include "main.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 //
 // Thread descriptor management
@@ -51,7 +52,8 @@ static TD* AllocateTD() {
 RC DestroyTD(TD* td) {
     // Perform a linear search for the TD
     // TODO: add a hash table to speed this up
-    for(int i = 0; i < MAX_THREADS; i++) {
+    int i;
+    for(i = 0; i < MAX_THREADS; i++) {
         if(&_threads.thread[i] == td) {
             _threads.freelist[_threads.next_free++] = i;
             td->tid = 0;
@@ -251,7 +253,8 @@ RC WaitlistEnqueue(TD* td, int waittime, LL* list) {
  * to it or null otherwise.
  */
 TD* FindTD(ThreadId tid, LL *list) {
-    for(TD* td = list->head; td; td = td->link)
+    TD* td;
+    for(td = list->head; td; td = td->link)
         if(td->tid == tid) return td;
     return NULL;
 }
@@ -332,4 +335,17 @@ ThreadId GetTid() {
 
     // Return next free TID
     return _tid.range_start++;
+}
+
+//
+// List initialization
+//
+
+void ListInit() {
+    // Initialize TD management
+    memset(&_threads, 0, sizeof(_threads));
+
+    // Initialize TID management
+    _tid.range_start = 1;
+    _tid.range_end = 1;
 }

@@ -13,10 +13,10 @@
 #endif /* NATIVE */
   
 int main(void)
-{   
+{
   InitKernel();//Initialize all kernel data structures
   
-  USERMODE;    //Switch to user mode 
+  USERMODE;    //Switch to user mode
 
   mymain();    //Now call what you would normally call main() 
   

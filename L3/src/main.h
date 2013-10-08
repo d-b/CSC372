@@ -4,13 +4,12 @@
 #include "defines.h"
 
 int main(void);
-void myprint(char *text);
 void printHex(uval32 num);
 
 
 #ifdef NATIVE
 
-void interrupt_handler(void);
+void interrupt_handler(int interrupt_mask);
 void pushbutton_isr(void);
 void timer_isr(void);
 void check_exception(void);

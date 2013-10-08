@@ -13,6 +13,7 @@
 
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
 IRQL InterruptLevel; // Current interrupt servicing level
 TD *Active, Kernel;  // Active & kernel tasks
@@ -23,6 +24,9 @@ void
 InitKernel(void) {
   // Initialize interrupt handling
   irq_init();
+
+  // Initialize list subsystem
+  ListInit();
 
   // Initialize thread lists
   InitList(L_PRIORITY, &Ready);
@@ -144,6 +148,7 @@ void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
     returnCode = RC_FAILED;
     break;
   } 
+  
 #ifdef NATIVE
   asm volatile("ldw r8, %0" : : "m" (sysMode): "r8");
   asm( "trap" );
@@ -166,8 +171,16 @@ RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
   // Initialize it with the user passed program counter, stack pointer & priority
   InitTD(td, pc, sp, priority);
 
+  
+  #ifdef NATIVE
+  // Setup native context
+    TrapFrame* tf = (TrapFrame*) (sp + 4);
+    memset(tf, 0, sizeof(TrapFrame));
+    asm volatile("stw r26, %0" : "=m"(tf->gp));
+    tf->sr = DEFAULT_THREAD_SR;
+    tf->ea = pc;
+  #else
   // Setup non-native context
-  #ifndef NATIVE
     getcontext(&td->context_outer);
     td->context_outer.uc_stack.ss_sp = malloc(STACKSIZE);
     td->context_outer.uc_stack.ss_size = STACKSIZE;

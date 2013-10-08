@@ -22,9 +22,10 @@ void the_reset (void)
 {
   asm (".set noat"); // Magic, for the C compiler
   asm (".set nobreak"); // Magic, for the C compiler
-  asm ("br main"); // Call the C language main program
+  asm ("movhi r1, %hi(main)" );
+  asm ("ori r1, r1, %lo(main)" );
+  asm ("jmp r1"); // Call the C language main program
 }
-
 
 void the_isr (void) __attribute__ ((section (".exceptions")));
 void the_isr (void)
@@ -44,7 +45,7 @@ void the_isr (void)
   asm ("SKIP_EA_DEC:");
   SAVE_REGS;
   asm ("addi fp, sp, 128");
-  asm ("mov r4, et")
+  asm ("mov r4, et");
   asm ("call interrupt_handler");// Call the interrupt handler
   LOAD_REGS;
   asm ("addi sp, sp, 116");
