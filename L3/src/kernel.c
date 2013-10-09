@@ -170,7 +170,6 @@ RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
 
   // Initialize it with the user passed program counter, stack pointer & priority
   InitTD(td, pc, sp, priority);
-
   
   #ifdef NATIVE
     // Setup native context
