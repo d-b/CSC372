@@ -1,16 +1,12 @@
-#include "defines.h"
-#include "debug.h"
-#include "list.h"
-#include "user.h"
+/*
+ * CSC372 - RTOS
+ *
+ * Daniel Bloemendal <d.bloemendal@gmail.com>
+ * David Lu <david-lu@hotmail.com>
+ */
+
 #include "kernel.h"
-#include "main.h"
-
-#include <assert.h>
-#include <stdlib.h>
-
-#ifndef NATIVE
-#include <stdio.h>
-#endif /* NATIVE */
+#include "user.h"
   
 int main(void)
 {

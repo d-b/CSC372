@@ -1,7 +1,14 @@
+/*
+ * CSC372 - RTOS
+ *
+ * Project wide defines
+ *
+ * Daniel Bloemendal <d.bloemendal@gmail.com>
+ * David Lu <david-lu@hotmail.com>
+ */
+
 #ifndef _DEFINES_H_
 #define _DEFINES_H_
-
-#include <stddef.h>
 
 //comment out to compile on x86
 //#define NATIVE

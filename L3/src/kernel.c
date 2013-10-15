@@ -1,19 +1,13 @@
 /*
- * CSC372 - Lab 3
+ * CSC372 - RTOS
  *
  * Kernel code
+ *
+ * Daniel Bloemendal <d.bloemendal@gmail.com>
+ * David Lu <david-lu@hotmail.com>
  */
 
-#include "defines.h"
-#include "debug.h"
-#include "list.h"
 #include "kernel.h"
-#include "irq.h"
-#include "main.h"
-
-#include <stdlib.h>
-#include <assert.h>
-#include <string.h>
 
 IRQL InterruptLevel; // Current interrupt servicing level
 TD *Active, Kernel;  // Active & kernel tasks
@@ -178,6 +172,7 @@ RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
     asm volatile("stw r26, %0" : "=m"(tf->gp));
     tf->sr = DEFAULT_THREAD_SR;
     tf->ea = pc;
+    tf->ra = (uval32) U_ThreadExit;
   #else
     // Setup non-native context
     getcontext(&td->context_outer);

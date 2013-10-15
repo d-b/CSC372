@@ -1,7 +1,10 @@
 /*
- * CSC372 - Lab 3
+ * CSC372 - RTOS
  *
  * Interrupt handling
+ * 
+ * Daniel Bloemendal <d.bloemendal@gmail.com>
+ * David Lu <david-lu@hotmail.com>
  */
 
 #ifndef _IRQ_H_

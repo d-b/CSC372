@@ -1,16 +1,13 @@
 /*
- * CSC372 - Lab 3
+ * CSC372 - RTOS
  *
  * Thread list implementation
+ *
+ * Daniel Bloemendal <d.bloemendal@gmail.com>
+ * David Lu <david-lu@hotmail.com>
  */
 
-#include "defines.h"
-#include "debug.h"
-#include "list.h"
-#include "main.h"
-
-#include <stdlib.h>
-#include <string.h>
+#include "kernel.h"
 
 //
 // Thread descriptor management

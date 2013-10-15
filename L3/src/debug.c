@@ -1,19 +1,13 @@
 /*
- * CSC372 - Lab 3
+ * CSC372 - RTOS
  *
  * Debugging helper routines
+ *
+ * Daniel Bloemendal <d.bloemendal@gmail.com>
+ * David Lu <david-lu@hotmail.com>
  */
 
-#include "defines.h"
-#include "list.h"
-#include "user.h"
 #include "kernel.h"
-#include "main.h"
-
-#include <assert.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <stdio.h>
 
 void printk(const char* format, ...) {
     va_list args;

@@ -1,14 +1,13 @@
 /*
- * CSC372 - Lab 3
+ * CSC372 - RTOS
  *
  * Exception handling
+ * 
+ * Daniel Bloemendal <d.bloemendal@gmail.com>
+ * David Lu <david-lu@hotmail.com>
  */
 
-#include "defines.h"
-#include "debug.h"
-#include "main.h"
 #include "kernel.h"
-#include "irq.h"
 
 #ifdef NATIVE
 /* The assembly language code below handles CPU reset processing */

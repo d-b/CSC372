@@ -1,17 +1,11 @@
-#include "defines.h"
-#include "debug.h"
-#include "list.h"
-#include "user.h"
-#include "main.h"
+/*
+ * CSC372 - RTOS
+ *
+ * Daniel Bloemendal <d.bloemendal@gmail.com>
+ * David Lu <david-lu@hotmail.com>
+ */
 
-#ifndef NATIVE
-
-#include "kernel.h" 
-
-#endif /* NATIVE */
-
-#include <stdlib.h>
-#include <assert.h>
+#include "user.h" 
 
 RC SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2) 
 {

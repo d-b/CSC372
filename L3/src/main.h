@@ -1,3 +1,10 @@
+/*
+ * CSC372 - RTOS
+ *
+ * Daniel Bloemendal <d.bloemendal@gmail.com>
+ * David Lu <david-lu@hotmail.com>
+ */
+
 #ifndef _MAIN_H_
 #define _MAIN_H_
 

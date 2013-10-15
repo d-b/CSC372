@@ -1,3 +1,5 @@
+CFLAGS = --pedantic -Wall -std=c99
+
 TESTS = check_lab3
 check_PROGRAMS = check_lab3
 check_lab3_SOURCES = check_lab3.c check_lab3_lifo.c check_lab3_priority.c check_lab3_waitlist.c

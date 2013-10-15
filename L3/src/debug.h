@@ -1,13 +1,14 @@
 /*
- * CSC372 - Lab 3
+ * CSC372 - RTOS
  *
  * Debugging helper routines
+ *
+ * Daniel Bloemendal <d.bloemendal@gmail.com>
+ * David Lu <david-lu@hotmail.com>
  */
 
 #ifndef _DEBUG_H_
 #define _DEBUG_H_
-
-#include <assert.h>
 
 #define KASSERT(x) assert(x)
 void printk(const char* format, ...);

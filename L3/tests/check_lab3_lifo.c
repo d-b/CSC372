@@ -1,17 +1,13 @@
 /*
- * CSC372 - Lab 3
+ * CSC372 - RTOS
  *
  * LIFO list test suite
+ *
+ * Daniel Bloemendal <d.bloemendal@gmail.com>
+ * David Lu <david-lu@hotmail.com>
  */
 
-// Test platform includes
-#include <stdlib.h>
-#include <check.h>
 #include "check_lab3.h"
-
-// Project includes
-#include "../src/defines.h"
-#include "../src/list.h"
 
 // Global list used for tests
 static LL test_list;
@@ -80,9 +76,9 @@ END_TEST
 START_TEST(test_lifo_enqueue_dequeue_multiple)
 {
     static const int count = MAX_THREADS;
-    TD* entry; int i;
     LL* list = init_test_list(L_LIFO);
     TD* td[count];
+    int i;
 
     // Allocate and add the thread descriptors
     for(i = 0; i < count; i++) {

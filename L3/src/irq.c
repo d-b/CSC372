@@ -1,16 +1,13 @@
 /*
- * CSC372 - Lab 3
+ * CSC372 - RTOS
  *
  * Interrupt handling
+ *
+ * Daniel Bloemendal <d.bloemendal@gmail.com>
+ * David Lu <david-lu@hotmail.com>
  */
 
-#include "defines.h"
-#include "debug.h"
-#include "list.h"
 #include "kernel.h"
-#include "irq.h"
-
-#include <string.h>
 
 //
 // IRQ handler structures & management

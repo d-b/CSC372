@@ -4,8 +4,6 @@
  * Test runner
  */
 
-#include <stdlib.h>
-#include <check.h>
 #include "check_lab3.h"
 
 int main(void) {
