@@ -56,7 +56,7 @@ void the_isr (void)
 
   //System call enter - go to kernel
   asm ("SOFT_INT_ENTER:");
-  SAVE_REGS;
+  SAVE_REGS_SOFTINT;
   MOVE_SP_TO_ACTIVE;
   MOVE_PC_TO_ACTIVE;
   MOVE_SR_TO_ACTIVE;
@@ -73,7 +73,7 @@ void the_isr (void)
   MOVE_ACTIVE_TO_PC;
   MOVE_ACTIVE_TO_SP;
   MOVE_ACTIVE_TO_SR;
-  LOAD_REGS;
+  LOAD_REGS_SOFTINT;
   asm ("addi sp, sp, 116");
   asm ("eret");
 }

@@ -43,10 +43,10 @@ void InitKernel(void);
 void Idle(void);
 void K_SysCall( SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2);
 void SysCallHandler(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2);
+void U_ThreadExit(void);
 
 #ifndef NATIVE
-void U_VirtualSysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2);
-void U_ThreadExit(void);
+RC U_VirtualSysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2);
 #endif
 
 #endif

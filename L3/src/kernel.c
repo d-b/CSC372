@@ -8,6 +8,7 @@
  */
 
 #include "kernel.h"
+#include "user.h"
 
 IRQL InterruptLevel; // Current interrupt servicing level
 TD *Active, Kernel;  // Active & kernel tasks
@@ -104,6 +105,9 @@ static RC ReadyThread(TD* td) {
   return status;
 }
 
+#ifndef NATIVE
+RC LastReturnCode;
+#endif
 void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
 { 
 #ifdef NATIVE
@@ -137,6 +141,10 @@ void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
     returnCode = DestroyThread(arg0);
     break;
 
+    case SYS_GETCURRENTTHREADID:
+    returnCode = Active->tid;
+    break;
+
   default:
     printk("Invalid SysCall type\n");
     returnCode = RC_FAILED;
@@ -145,7 +153,10 @@ void K_SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2)
   
 #ifdef NATIVE
   asm volatile("ldw r8, %0" : : "m" (sysMode): "r8");
+  asm volatile("ldw r2, %0" : : "m" (returnCode): "r2", "r8");
   asm( "trap" );
+#else
+  LastReturnCode = returnCode;
 #endif /* NATIVE */
 }
 
@@ -172,7 +183,7 @@ RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
     asm volatile("stw r26, %0" : "=m"(tf->gp));
     tf->sr = DEFAULT_THREAD_SR;
     tf->ea = pc;
-    tf->ra = (uval32) U_ThreadExit;
+    tf->ra = (uval32) ThreadExit;
   #else
     // Setup non-native context
     getcontext(&td->context_outer);
@@ -199,7 +210,7 @@ RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
   /////////////////////////////
 
   // All operations completed successfully
-  return RC_SUCCESS;
+  return td->tid;
 }
 
 RC Yield(){
@@ -334,24 +345,25 @@ void Idle() { while(1) Yield(); }
 
 enum EJumpStatus { JUMP_FallThrough, JUMP_Exit };
 
-void U_VirtualSysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2) {
+RC U_VirtualSysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2) {
   // Jump status
   volatile int status = JUMP_FallThrough;
+  volatile RC returnCode = RC_FAILED;
 
   // Save the context
   getcontext(&Active->context);
-  if(status != JUMP_FallThrough) return;
+  if(status != JUMP_FallThrough) return returnCode;
   status = JUMP_Exit;
 
   // Call K_SysCall
   K_SysCall(type, arg0, arg1, arg2);
+  returnCode = LastReturnCode;
 
   // Switch to active thread
   setcontext(&Active->context);
-}
 
-void U_ThreadExit(void) {
-  U_VirtualSysCall(SYS_DESTROY, 0, 0, 0);
+  // Shouldn't normally happen
+  return returnCode;
 }
 
 #endif
