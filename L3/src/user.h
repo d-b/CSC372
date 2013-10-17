@@ -17,7 +17,7 @@
 
 RC SysCall( SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2);
 void ThreadExit(void);
-void U_VirtualSysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2);
+RC U_VirtualSysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2);
 
 void mymain(void);
 

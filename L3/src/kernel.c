@@ -189,7 +189,7 @@ RC CreateThread(uval32 pc, uval32 sp, uval32 priority) {
     getcontext(&td->context_outer);
     td->context_outer.uc_stack.ss_sp = malloc(STACKSIZE);
     td->context_outer.uc_stack.ss_size = STACKSIZE;
-    makecontext(&td->context_outer, (void (*)()) U_ThreadExit, 0);
+    makecontext(&td->context_outer, (void (*)()) ThreadExit, 0);
     getcontext(&td->context);
     td->context.uc_link = &td->context_outer;
     td->context.uc_stack.ss_sp = (void*) sp;
