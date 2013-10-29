@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Get full base path
+pushd `dirname $0` > /dev/null
+BASEPATH=`pwd -P`
+popd > /dev/null
+
+# Prepare the build environment
+mkdir -p $BASEPATH/m4
+autoreconf -fvi
+./configure --prefix=$BASEPATH
