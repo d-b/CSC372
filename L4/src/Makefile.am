@@ -1,7 +1,7 @@
 AM_CFLAGS = --pedantic -Wall -std=c99
 
 lib_LTLIBRARIES = liblab4.la
-liblab4_la_SOURCES = kernel.c exception.c irq.c list.c user.c debug.c
+liblab4_la_SOURCES = kernel.c exception.c irq.c list.c user.c debug.c audio.c
 
 bin_PROGRAMS = lab4
 lab4_SOURCES = main.c
