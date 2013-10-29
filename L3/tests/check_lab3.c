@@ -1,7 +1,10 @@
 /*
- * CSC372 - Lab 3
+ * CSC372 - RTOS
  *
  * Test runner
+ *
+ * Daniel Bloemendal <d.bloemendal@gmail.com>
+ * David Lu <david-lu@hotmail.com>
  */
 
 #include "check_lab3.h"
