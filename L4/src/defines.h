@@ -18,8 +18,9 @@ typedef unsigned char uval8;
 typedef unsigned int uval32;
 typedef uval32 ThreadId;
 #else
+#include <stdint.h>
 typedef unsigned char uval8;
-typedef unsigned long long uval32;
+typedef intptr_t uval32;
 typedef uval32 ThreadId;
 #endif
 

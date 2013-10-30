@@ -11,10 +11,14 @@
 // Audio types
 typedef uval32 sample_t;
 
-int audio_init();
-int audio_sine(sample_t* buffer, int samples, int frequency);
-int audio_square(sample_t* buffer, int samples, int frequency);
+// Audio parameters
+#define AUDIO_SAMPLE_RATE   48000 // 48KHz
+#define AUDIO_SAMPLE_BUFFER 1024  // 1024 sample buffer
+
+int audio_init(void);
+int audio_sine(sample_t* buffer, int samples);
+int audio_square(sample_t* buffer, int samples);
 int audio_send(sample_t* buffer, int samples);
-int audio_exit();
+int audio_exit(void);
 
 #endif
