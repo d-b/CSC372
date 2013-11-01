@@ -45,7 +45,7 @@ int ringbuffer_write(ringbuffer_t* rb, const void* buffer, int elements) {
         memcpy(rb->buffer + (base * rb->stride), src, count * rb->stride);
         memcpy(rb->buffer, src + (count * rb->stride), (elements - count) * rb->stride);
     }
-    
+
     // Update buffer state information
     int rem = rb->size - rb->count;
     if(elements <= rem)
