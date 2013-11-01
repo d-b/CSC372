@@ -25,11 +25,10 @@
 
 // Platform specific configuration
 #ifdef NATIVE
-#define AUDIO_DEVICE_BUFFER_SAMPLES 128
 #define AUDIO_CHANNELS 2
 #define AUDIO_BIT_DEPTH 32
 #define AUDIO_SAMPLE_RATE 48000
-#define AUDIO_DEVICE_BUFFER_SAMPLES 1024 
+#define AUDIO_DEVICE_BUFFER_SAMPLES 128 
 #elif PLATFORM_RPI
 #define AUDIO_CHANNELS 2
 #define AUDIO_BIT_DEPTH 32
@@ -149,7 +148,7 @@ void audio_thread(void) {
         // Wait before sending the next packet as required
         uint32_t latency;
         while((latency = audioplay_get_latency(audio_playstate)) > (AUDIO_SAMPLE_RATE * (AUDIO_MIN_LATENCY_TIME + AUDIO_SLEEP_TIME) / 1000))
-            usleep(AUDIO_SLEEP_TIME*1000);
+            usleep(AUDIO_SLEEP_TIME * 1000);
 
         // Start playing the sequence in the buffer
         int ret = audioplay_play_buffer(audio_playstate, devbuff, count * (AUDIO_BIT_DEPTH>>3) * 2);
