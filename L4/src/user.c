@@ -49,7 +49,7 @@ void mymain()
   // Audio test routine
   audio_init();
   sample_t buffer[1024];
-  int count = audio_sine(buffer, 1024, 410, 100000000);
+  int count = audio_sine(buffer, 1024, 150, 100000000);
   for(;;) {
     while(audio_free() > count)
       audio_send(buffer, count);
