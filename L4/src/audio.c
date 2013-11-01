@@ -39,18 +39,18 @@
 #define AUDIO_MIN_LATENCY_TIME 20
 static AUDIOPLAY_STATE_T* audio_playstate;
 #else
-#define AUDIO_CHANNELS 0
-#define AUDIO_BIT_DEPTH 0
-#define AUDIO_SAMPLE_RATE 0
-#define AUDIO_DEVICE_BUFFER_SAMPLES 0
+#define AUDIO_CHANNELS 2
+#define AUDIO_BIT_DEPTH 32
+#define AUDIO_SAMPLE_RATE 48000
+#define AUDIO_DEVICE_BUFFER_SAMPLES 1024
 #endif 
 
 // Thread internals
-static sample_t audio_thread_buffer[AUDIO_DEVICE_BUFFER_SAMPLES];
+static sample_t audio_thread_buffer[AUDIO_DEVICE_BUFFER_SAMPLES * AUDIO_CHANNELS];
 static int audio_thread_exit;
 
 // Sample ring buffer
-static sample_t rb_buffer[AUDIO_BUFFER_SAMPLES];
+static sample_t rb_buffer[AUDIO_BUFFER_SAMPLES * AUDIO_CHANNELS];
 static ringbuffer_t rb_samples;
 
 // Assert macro
@@ -88,7 +88,7 @@ inline int min(int a, int b) {
 void audio_thread_init(void) {
 #ifdef PLATFORM_RPI
     int ret;
-    int buffer_size = AUDIO_DEVICE_BUFFER_SAMPLES * (AUDIO_BIT_DEPTH>>3) * 2;
+    int buffer_size = AUDIO_DEVICE_BUFFER_SAMPLES * (AUDIO_BIT_DEPTH>>3) * AUDIO_CHANNELS;
     ret = audioplay_create(&audio_playstate,
                            AUDIO_SAMPLE_RATE,    /* Sample rate */
                            AUDIO_CHANNELS,       /* Channels */
@@ -120,30 +120,25 @@ void audio_thread(void) {
         count = min(count, AUDIO_DEVICE_BUFFER_SAMPLES);
 
         // Read the required samples from the ring buffer
-        count = ringbuffer_read(&rb_samples, audio_thread_buffer, count);
+        count = ringbuffer_read(&rb_samples, audio_thread_buffer, count * AUDIO_CHANNELS);
+        count /= AUDIO_CHANNELS;
 
         // Send the samples to the audio hardware
-        int i; for(i = 0; i < count; i++) {
-            AUDIO_CODEC_LEFTCHAN  = audio_thread_buffer[i];
-            AUDIO_CODEC_RIGHTCHAN = audio_thread_buffer[i];
+        int i; for(i = 0; i < count; i += AUDIO_CHANNELS) {
+            AUDIO_CODEC_LEFTCHAN  = audio_thread_buffer[i + 0];
+            AUDIO_CODEC_RIGHTCHAN = audio_thread_buffer[i + 1];
         }
     // Raspberry Pi implementation
     #elif PLATFORM_RPI
-        // Read the required samples from the ring buffer
-        int count;
-        while((count = ringbuffer_read(&rb_samples, audio_thread_buffer, AUDIO_DEVICE_BUFFER_SAMPLES)) == 0)
-            SysCall(SYS_YIELD, 0, 0, 0);
-
         // Acquire a device buffer
         uint8_t* devbuff;
         while((devbuff = audioplay_get_buffer(audio_playstate)) == NULL)
             usleep(AUDIO_SLEEP_TIME * 1000);
-        sample_t* samples = (sample_t*) devbuff;
 
-        // Write samples to the device buffer
-        for(int i = 0; i < count; i++)
-            for(int j = 0; j < 2; j++)
-                samples[i*2 + j] = audio_thread_buffer[i];
+        // Read the required samples from the ring buffer
+        int count;
+        while((count = ringbuffer_read(&rb_samples, devbuff, AUDIO_DEVICE_BUFFER_SAMPLES * AUDIO_CHANNELS)) == 0)
+            SysCall(SYS_YIELD, 0, 0, 0);        
 
         // Wait before sending the next packet as required
         uint32_t latency;
@@ -151,7 +146,7 @@ void audio_thread(void) {
             usleep(AUDIO_SLEEP_TIME * 1000);
 
         // Start playing the sequence in the buffer
-        int ret = audioplay_play_buffer(audio_playstate, devbuff, count * (AUDIO_BIT_DEPTH>>3) * 2);
+        int ret = audioplay_play_buffer(audio_playstate, devbuff, count * (AUDIO_BIT_DEPTH>>3) * AUDIO_CHANNELS);
         ASSERT(ret == 0);
     #endif
 
@@ -175,7 +170,7 @@ int audio_init(void) {
     // Set initial thread parameters
     audio_thread_exit = 0;
     // Initialize the ring buffer
-    ringbuffer_init(&rb_samples, rb_buffer, AUDIO_BUFFER_SAMPLES, sizeof(sample_t));
+    ringbuffer_init(&rb_samples, rb_buffer, AUDIO_BUFFER_SAMPLES * AUDIO_CHANNELS, sizeof(sample_t));
     // Start the audio processing thread
     SysCall(SYS_CREATE, (uval32) &audio_thread, (uval32) malloc(STACKSIZE), 1);
     // Successful startup
@@ -188,10 +183,12 @@ int audio_init(void) {
  * Write sine wave of the specified frequency to the given buffer
  */
 int audio_sine(sample_t* buffer, int samples, int frequency, int amplitude) {
-    samples = min(samples, AUDIO_SAMPLE_RATE/frequency);
-    int i; for(i = 0; i < samples; i++)
-        buffer[i] = (sample_t) (sin(((double)i/samples)*2*PI)*amplitude);
-    return samples;
+    int frames = min(samples/AUDIO_CHANNELS, AUDIO_SAMPLE_RATE/frequency);
+    int i, j; for(i = 0; i < frames; i++) {
+        sample_t sample = (sample_t) (sin(((double)i/frames)*2*PI)*amplitude);
+        for(j = 0; j < AUDIO_CHANNELS; j++)
+            buffer[AUDIO_CHANNELS * i + j] = sample;
+    } return frames * AUDIO_CHANNELS;
 }
 
 /*
@@ -200,10 +197,12 @@ int audio_sine(sample_t* buffer, int samples, int frequency, int amplitude) {
  * Write square wave of the specified frequency to the given buffer
  */
 int audio_square(sample_t* buffer, int samples, int frequency, int amplitude) {
-    samples = min(samples, AUDIO_SAMPLE_RATE/frequency);
-    int i; for(i = 0; i < samples; i++)
-        buffer[i] = (i <= (samples/2)) ? amplitude : -amplitude;
-    return samples;
+    int frames = min(samples/AUDIO_CHANNELS, AUDIO_SAMPLE_RATE/frequency);
+    int i, j; for(i = 0; i < frames; i++) {
+        sample_t sample = (i <= (frames/2)) ? amplitude : -amplitude;
+        for(j = 0; j < AUDIO_CHANNELS; j++)
+            buffer[AUDIO_CHANNELS * i + j] = sample;
+    } return frames * AUDIO_CHANNELS;
 }
 
 /*
@@ -212,6 +211,7 @@ int audio_square(sample_t* buffer, int samples, int frequency, int amplitude) {
  * Add samples to the internal sample buffer
  */
 int audio_send(sample_t* buffer, int samples) {
+    samples -= samples % AUDIO_CHANNELS;
     return ringbuffer_write(&rb_samples, buffer, samples);
 }
 
@@ -234,7 +234,7 @@ int audio_stats(audio_stats_t* stats) {
     stats->bit_depth = AUDIO_BIT_DEPTH;
     stats->sample_rate = AUDIO_SAMPLE_RATE;
     stats->buffer_free = audio_free();
-    stats->buffer_size = AUDIO_BUFFER_SAMPLES;
+    stats->buffer_size = AUDIO_BUFFER_SAMPLES * AUDIO_CHANNELS;
     return 0;
 }
 
