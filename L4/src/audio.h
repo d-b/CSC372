@@ -11,14 +11,21 @@
 // Audio types
 typedef uval32 sample_t;
 
-// Audio parameters
-#define AUDIO_SAMPLE_RATE   48000 // 48KHz
-#define AUDIO_SAMPLE_BUFFER 1024  // 1024 sample buffer
+// Audio information
+typedef struct {
+    int channels;
+    int bit_depth;
+    int sample_rate;
+    int buffer_free;
+    int buffer_size;
+} audio_stats_t;
 
 int audio_init(void);
-int audio_sine(sample_t* buffer, int samples);
-int audio_square(sample_t* buffer, int samples);
+int audio_sine(sample_t* buffer, int samples, int frequency, int amplitude);
+int audio_square(sample_t* buffer, int samples, int frequency, int amplitude);
 int audio_send(sample_t* buffer, int samples);
+int audio_free(void);
+int audio_stats(audio_stats_t* stats);
 int audio_exit(void);
 
 #endif

@@ -20,8 +20,8 @@ typedef struct {
 } ringbuffer_t;
 
 void ringbuffer_init(ringbuffer_t* rb, void* buffer, int size, int stride);
-int ringbuffer_write(ringbuffer_t* rb, const void* src, int elements);
-int ringbuffer_read(ringbuffer_t* rb, void* dest, int elements);
+int ringbuffer_write(ringbuffer_t* rb, const void* buffer, int elements);
+int ringbuffer_read(ringbuffer_t* rb, void* buffer, int elements);
 int ringbuffer_remaining(ringbuffer_t* rb);
 int ringbuffer_empty(ringbuffer_t* rb);
 

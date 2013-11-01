@@ -17,11 +17,21 @@ typedef unsigned char uval8;
 typedef unsigned int uval32;
 typedef uval32 ThreadId;
 #else
+#define _BSD_SOURCE
 #include "../config.h"
 #include <stdint.h>
+#include <unistd.h>
 typedef unsigned char uval8;
 typedef intptr_t uval32;
 typedef uval32 ThreadId;
+#endif
+
+#ifdef PLATFORM_ARM
+#define PLATFORM_RPI 1
+#endif
+
+#ifndef PI
+#define PI 3.141592653589793238462643383
 #endif
 
 typedef enum { SYS_CREATE, SYS_SUSPEND, SYS_RESUME, SYS_YIELD, SYS_CHANGEPRIORITY, SYS_DESTROY, SYS_GETCURRENTTHREADID } SysCallType;

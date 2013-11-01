@@ -7,7 +7,7 @@
 
 #include "user.h"
 
-#ifdef PLATFORM_ARM
+#ifdef PLATFORM_RPI
 #include "bcm_host.h"
 #endif
 
@@ -43,5 +43,12 @@ void mymain()
 {
   bcm_host_init();
   audio_init();
+  sample_t buffer[1024];
+  int count = audio_sine(buffer, 1024, 410, 100000000);
+  for(;;) {
+    while(audio_free() > count)
+      audio_send(buffer, count);
+    SysCall(SYS_YIELD, 0, 0, 0);
+  }
   SysCall(SYS_SUSPEND, 0, 0, 0);
 }

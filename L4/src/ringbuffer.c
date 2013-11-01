@@ -27,9 +27,12 @@ void ringbuffer_init(ringbuffer_t* rb, void* buffer, int size, int stride) {
  *
  * Write a chunk of data to the wring buffer
  */
-int ringbuffer_write(ringbuffer_t* rb, const void* src, int elements) {
+int ringbuffer_write(ringbuffer_t* rb, const void* buffer, int elements) {
     // Sanity check on number of elements to write
     if(elements > rb->size) elements = rb->size;
+
+    // Cast buffer into byte pointer
+    char* src = (char*) buffer;    
 
     // Write data to the buffer
     int base = (rb->start + rb->count) % rb->size;
@@ -40,8 +43,7 @@ int ringbuffer_write(ringbuffer_t* rb, const void* src, int elements) {
     else {
         // Perform wrapping write to the buffer
         memcpy(rb->buffer + (base * rb->stride), src, count * rb->stride);
-        count = elements - count;
-        memcpy(rb->buffer, src, count * rb->stride);
+        memcpy(rb->buffer, src + (count * rb->stride), (elements - count) * rb->stride);
     }
     
     // Update buffer state information
@@ -63,9 +65,12 @@ int ringbuffer_write(ringbuffer_t* rb, const void* src, int elements) {
  *
  * Read from the ring buffer
  */
-int ringbuffer_read(ringbuffer_t* rb, void* dest, int elements) {
+int ringbuffer_read(ringbuffer_t* rb, void* buffer, int elements) {
     // Sanity check on number of elements to read
     if(elements > rb->count) elements = rb->count;
+
+    // Cast buffer into byte pointer
+    char* dest = (char*) buffer;    
 
     // Read data from the buffer
     int count = rb->size - rb->start;
@@ -75,8 +80,7 @@ int ringbuffer_read(ringbuffer_t* rb, void* dest, int elements) {
     else {
         // Perform wrapping read from the buffer
         memcpy(dest, rb->buffer + (rb->start * rb->stride), count * rb->stride);
-        count = elements - count;
-        memcpy(dest, rb->buffer, count * rb->stride);
+        memcpy(dest + (count * rb->stride), rb->buffer, (elements - count) * rb->stride);
     }
 
     // Update buffer state information

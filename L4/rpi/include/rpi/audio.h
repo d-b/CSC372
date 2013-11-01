@@ -96,6 +96,19 @@ int32_t audioplay_create(AUDIOPLAY_STATE_T **handle,
                          uint32_t buffer_size);
 
 /**
+ * The <DFN>audioplay_set_dest()</DFN> sets the destination audio channel.
+ * 
+ * @param  handle       On success, this is filled in with a handle to use in other
+ *                      API functions.
+ * 
+ * @param  name         The name of the destination channel to switch to.
+ *                     
+ * @return              0 on success, -1 on failure.
+ *********************************************************************************/
+int32_t audioplay_set_dest(AUDIOPLAY_STATE_T *handle,
+                           const char *name);
+
+/**
  * The <DFN>audioplay_delete()</DFN> function deletes the audioplay object.
  * 
  * @param  handle       Must be a handle previously created by

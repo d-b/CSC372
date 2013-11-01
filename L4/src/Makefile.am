@@ -10,6 +10,6 @@ lab4_LDADD = liblab4.la
 if PLATFORM_ARM
     AM_CFLAGS += -I$(top_srcdir)/rpi/include -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads -I/opt/vc/include/interface/vmcs_host/linux
     AM_LDFLAGS = -L/opt/vc/lib
-    lab4_LDADD += -lbcm_host
+    lab4_LDADD += -lbcm_host -lopenmaxil
     lab4_LDADD += $(top_srcdir)/rpi/lib/audio.a
 endif
