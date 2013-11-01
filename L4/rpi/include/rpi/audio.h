@@ -88,12 +88,12 @@ typedef struct AUDIOPLAY_STATE_T AUDIOPLAY_STATE_T;
  *                     
  * @return              0 on success, -1 on failure.
  *********************************************************************************/
-VCHPRE_ int32_t VCHPOST_ audioplay_create(AUDIOPLAY_STATE_T **handle,
-                                          uint32_t sample_rate,
-                                          uint32_t num_channels,
-                                          uint32_t bit_depth,
-                                          uint32_t num_buffers,
-                                          uint32_t buffer_size);
+int32_t audioplay_create(AUDIOPLAY_STATE_T **handle,
+                         uint32_t sample_rate,
+                         uint32_t num_channels,
+                         uint32_t bit_depth,
+                         uint32_t num_buffers,
+                         uint32_t buffer_size);
 
 /**
  * The <DFN>audioplay_delete()</DFN> function deletes the audioplay object.
@@ -106,7 +106,7 @@ VCHPRE_ int32_t VCHPOST_ audioplay_create(AUDIOPLAY_STATE_T **handle,
  * 
  * @return              0 on success, -1 on failure.
  ********************************************************************************/
-VCHPRE_ int32_t VCHPOST_ audioplay_delete(AUDIOPLAY_STATE_T *handle);
+int32_t audioplay_delete(AUDIOPLAY_STATE_T *handle);
 
 /**
  * The <DFN>audioplay_get_buffer()</DFN> function requests an empty
@@ -119,7 +119,7 @@ VCHPRE_ int32_t VCHPOST_ audioplay_delete(AUDIOPLAY_STATE_T *handle);
  * @return              A pointer to an available buffer.  If no buffers are
  *                      available, then <DFN>NULL</DFN> will be returned.
  *********************************************************************************/
-VCHPRE_ uint8_t * VCHPOST_ audioplay_get_buffer(AUDIOPLAY_STATE_T *handle);
+uint8_t * audioplay_get_buffer(AUDIOPLAY_STATE_T *handle);
 
 
 /**
@@ -139,9 +139,9 @@ VCHPRE_ uint8_t * VCHPOST_ audioplay_get_buffer(AUDIOPLAY_STATE_T *handle);
  * 
  * @return               0 on success, -1 on failure
  ********************************************************************************/
-VCHPRE_ int32_t VCHPOST_ audioplay_play_buffer(AUDIOPLAY_STATE_T *handle,
-                                               uint8_t *buffer,
-                                               uint32_t length);
+int32_t audioplay_play_buffer(AUDIOPLAY_STATE_T *handle,
+                              uint8_t *buffer,
+                              uint32_t length);
 
 /**
  * The <DFN>audioplay_get_latency()</DFN> requests the current audio
@@ -153,7 +153,7 @@ VCHPRE_ int32_t VCHPOST_ audioplay_play_buffer(AUDIOPLAY_STATE_T *handle,
  * 
  * @return               Number of samples currently buffered.
  *********************************************************************************/
-VCHPRE_ uint32_t VCHPOST_ audioplay_get_latency(AUDIOPLAY_STATE_T *handle);
+uint32_t audioplay_get_latency(AUDIOPLAY_STATE_T *handle);
 
 
 #endif /* AUDIOPLAY_H */
