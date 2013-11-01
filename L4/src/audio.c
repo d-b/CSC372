@@ -7,6 +7,10 @@
 
 #include "user.h"
 
+#ifdef RASPI
+#include <rpi/audio.h>
+#endif
+
 // Native audio driver parameters
 #ifdef NATIVE
 #define AUDIO_CODEC_BASE      ((volatile int*)0x10003040)
@@ -43,6 +47,7 @@ inline int min(int a, int b) {
  */
 void audio_thread(void) {
     while(!audio_thread_exit) {
+    // Native implementation
     #ifdef NATIVE
         // See how many samples we should send
         int count = min(AUDIO_CODEC_FIFOSPACE & 0xFF000000,
@@ -57,6 +62,7 @@ void audio_thread(void) {
             AUDIO_CODEC_LEFTCHAN  = audio_thread_buffer[i];
             AUDIO_CODEC_RIGHTCHAN = audio_thread_buffer[i];
         }
+    // Raspberry Pi implementation
     #endif
 
         // Yield to other threads

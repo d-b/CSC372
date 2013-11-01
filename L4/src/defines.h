@@ -10,8 +10,8 @@
 #ifndef _DEFINES_H_
 #define _DEFINES_H_
 
-//comment out to compile on x86
 //#define NATIVE
+#define RASPI
 
 #ifdef NATIVE
 typedef unsigned char uval8;

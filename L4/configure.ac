@@ -15,6 +15,9 @@ LT_INIT
 AC_PROG_CC
 AC_PROG_LIBTOOL
 
+# Processor detection
+AM_CONDITIONAL([CPU_ARM], [true])
+
 # Add our profile packages
 export PKG_CONFIG_PATH=$HOME/.local/lib/pkgconfig
 
