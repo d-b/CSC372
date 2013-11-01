@@ -23,7 +23,7 @@ case "$host_cpu" in
         AM_CONDITIONAL([PLATFORM_X86], [true])
         AM_CONDITIONAL([PLATFORM_ARM], [false])
         ;;
-    arm)
+    arm*)
         AC_DEFINE([PLATFORM_ARM], [1], [ARM CPU platform])
         AM_CONDITIONAL([PLATFORM_X86], [false])
         AM_CONDITIONAL([PLATFORM_ARM], [true])

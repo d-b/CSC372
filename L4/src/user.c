@@ -5,7 +5,11 @@
  * David Lu <david-lu@hotmail.com>
  */
 
-#include "user.h" 
+#include "user.h"
+
+#ifdef PLATFORM_ARM
+#include "bcm_host.h"
+#endif
 
 RC SysCall(SysCallType type, uval32 arg0, uval32 arg1, uval32 arg2) 
 {
@@ -37,6 +41,7 @@ void ThreadExit(void) {
 
 void mymain() 
 {
+  bcm_host_init();
   audio_init();
   SysCall(SYS_SUSPEND, 0, 0, 0);
 }
