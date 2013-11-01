@@ -41,7 +41,12 @@ void ThreadExit(void) {
 
 void mymain() 
 {
+// Raspberry Pi initialization
+#ifdef PLATFORM_RPI
   bcm_host_init();
+#endif
+
+  // Audio test routine
   audio_init();
   sample_t buffer[1024];
   int count = audio_sine(buffer, 1024, 410, 100000000);

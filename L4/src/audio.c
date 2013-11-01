@@ -39,6 +39,11 @@
 #define AUDIO_SLEEP_TIME 10
 #define AUDIO_MIN_LATENCY_TIME 20
 static AUDIOPLAY_STATE_T* audio_playstate;
+#else
+#define AUDIO_CHANNELS 0
+#define AUDIO_BIT_DEPTH 0
+#define AUDIO_SAMPLE_RATE 0
+#define AUDIO_DEVICE_BUFFER_SAMPLES 0
 #endif 
 
 // Thread internals
