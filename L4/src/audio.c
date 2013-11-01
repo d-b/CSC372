@@ -146,7 +146,7 @@ void audio_thread(void) {
             usleep(AUDIO_SLEEP_TIME * 1000);
 
         // Start playing the sequence in the buffer
-        int ret = audioplay_play_buffer(audio_playstate, devbuff, count * (AUDIO_BIT_DEPTH>>3) * AUDIO_CHANNELS);
+        int ret = audioplay_play_buffer(audio_playstate, devbuff, count * (AUDIO_BIT_DEPTH>>3));
         ASSERT(ret == 0);
     #endif
 
@@ -170,7 +170,7 @@ int audio_init(void) {
     // Set initial thread parameters
     audio_thread_exit = 0;
     // Initialize the ring buffer
-    ringbuffer_init(&rb_samples, rb_buffer, AUDIO_BUFFER_SAMPLES * AUDIO_CHANNELS, sizeof(sample_t));
+    ringbuffer_init(&rb_samples, rb_buffer, AUDIO_BUFFER_SAMPLES * AUDIO_CHANNELS, (AUDIO_BIT_DEPTH>>3));
     // Start the audio processing thread
     SysCall(SYS_CREATE, (uval32) &audio_thread, (uval32) malloc(STACKSIZE), 1);
     // Successful startup
