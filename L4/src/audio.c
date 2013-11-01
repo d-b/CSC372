@@ -7,7 +7,7 @@
 
 #include "user.h"
 
-#ifdef RASPI
+#ifdef PLATFORM_ARM
 #include <rpi/audio.h>
 #endif
 
@@ -63,6 +63,8 @@ void audio_thread(void) {
             AUDIO_CODEC_RIGHTCHAN = audio_thread_buffer[i];
         }
     // Raspberry Pi implementation
+    #elif PLATFORM_ARM
+    /*...*/
     #endif
 
         // Yield to other threads

@@ -11,13 +11,13 @@
 #define _DEFINES_H_
 
 //#define NATIVE
-#define RASPI
 
 #ifdef NATIVE
 typedef unsigned char uval8;
 typedef unsigned int uval32;
 typedef uval32 ThreadId;
 #else
+#include "../config.h"
 #include <stdint.h>
 typedef unsigned char uval8;
 typedef intptr_t uval32;

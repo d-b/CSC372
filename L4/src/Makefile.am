@@ -7,7 +7,7 @@ bin_PROGRAMS = lab4
 lab4_SOURCES = main.c
 lab4_LDADD = liblab4.la
 
-if CPU_ARM
+if PLATFORM_ARM
     lab4_LDADD += $(top_srcdir)/rpi/lib/audio.a
     AM_CFLAGS += -I$(top_srcdir)/rpi/include
 endif
