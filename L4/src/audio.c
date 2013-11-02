@@ -20,20 +20,19 @@
 #define AUDIO_CODEC_RIGHTCHAN *(AUDIO_CODEC_BASE+3)
 #endif
 
-// Platform independent configuration
-#define AUDIO_BUFFER_SAMPLES 1024
-
 // Platform specific configuration
 #ifdef NATIVE
 #define AUDIO_CHANNELS 2
 #define AUDIO_BIT_DEPTH 32
 #define AUDIO_SAMPLE_RATE 48000
-#define AUDIO_DEVICE_BUFFER_SAMPLES 128 
+#define AUDIO_BUFFER_FRAMES 1024
+#define AUDIO_DEVICE_BUFFER_FRAMES 128
 #elif PLATFORM_RPI
 #define AUDIO_CHANNELS 2
 #define AUDIO_BIT_DEPTH 32
 #define AUDIO_SAMPLE_RATE 48000
-#define AUDIO_DEVICE_BUFFER_SAMPLES 1024
+#define AUDIO_BUFFER_FRAMES 1024
+#define AUDIO_DEVICE_BUFFER_FRAMES 1024
 #define AUDIO_DEVICE_BUFFERS 10
 #define AUDIO_SLEEP_TIME 10
 #define AUDIO_MIN_LATENCY_TIME 20
@@ -42,15 +41,20 @@ static AUDIOPLAY_STATE_T* audio_playstate;
 #define AUDIO_CHANNELS 2
 #define AUDIO_BIT_DEPTH 32
 #define AUDIO_SAMPLE_RATE 48000
-#define AUDIO_DEVICE_BUFFER_SAMPLES 1024
-#endif 
+#define AUDIO_BUFFER_FRAMES 1024
+#define AUDIO_DEVICE_BUFFER_FRAMES 1024
+#endif
+
+// Platform independent configuration
+#define AUDIO_BUFFER_SAMPLES AUDIO_BUFFER_FRAMES * AUDIO_CHANNELS
+#define AUDIO_DEVICE_BUFFER_SAMPLES AUDIO_DEVICE_BUFFER_FRAMES * AUDIO_CHANNELS
 
 // Thread internals
-static sample_t audio_thread_buffer[AUDIO_DEVICE_BUFFER_SAMPLES * AUDIO_CHANNELS];
+static sample_t audio_thread_buffer[AUDIO_DEVICE_BUFFER_SAMPLES];
 static int audio_thread_exit;
 
 // Sample ring buffer
-static sample_t rb_buffer[AUDIO_BUFFER_SAMPLES * AUDIO_CHANNELS];
+static sample_t rb_buffer[AUDIO_BUFFER_SAMPLES];
 static ringbuffer_t rb_samples;
 
 // Assert macro
@@ -88,7 +92,7 @@ inline int min(int a, int b) {
 void audio_thread_init(void) {
 #ifdef PLATFORM_RPI
     int ret;
-    int buffer_size = AUDIO_DEVICE_BUFFER_SAMPLES * (AUDIO_BIT_DEPTH>>3) * AUDIO_CHANNELS;
+    int buffer_size = AUDIO_DEVICE_BUFFER_SAMPLES * (AUDIO_BIT_DEPTH>>3);
     ret = audioplay_create(&audio_playstate,
                            AUDIO_SAMPLE_RATE,    /* Sample rate */
                            AUDIO_CHANNELS,       /* Channels */
@@ -115,13 +119,12 @@ void audio_thread(void) {
     // Native implementation
     #ifdef NATIVE
         // See how many samples we should send
-        int count = min(AUDIO_CODEC_FIFOSPACE & 0xFF000000,
-                        AUDIO_CODEC_FIFOSPACE & 0x00FF0000);
-        count = min(count, AUDIO_DEVICE_BUFFER_SAMPLES);
+        int count = min(AUDIO_CODEC_FIFOSPACE & 0xFF000000 >> 24,
+                        AUDIO_CODEC_FIFOSPACE & 0x00FF0000 >> 16);
+        count = min(count, AUDIO_DEVICE_BUFFER_FRAMES);
 
         // Read the required samples from the ring buffer
         count = ringbuffer_read(&rb_samples, audio_thread_buffer, count * AUDIO_CHANNELS);
-        count /= AUDIO_CHANNELS;
 
         // Send the samples to the audio hardware
         int i; for(i = 0; i < count; i += AUDIO_CHANNELS) {
@@ -137,8 +140,8 @@ void audio_thread(void) {
 
         // Read the required samples from the ring buffer
         int count;
-        while((count = ringbuffer_read(&rb_samples, devbuff, AUDIO_DEVICE_BUFFER_SAMPLES * AUDIO_CHANNELS)) == 0)
-            SysCall(SYS_YIELD, 0, 0, 0);        
+        while((count = ringbuffer_read(&rb_samples, devbuff, AUDIO_DEVICE_BUFFER_SAMPLES)) == 0)
+            SysCall(SYS_YIELD, 0, 0, 0);
 
         // Wait before sending the next packet as required
         uint32_t latency;
@@ -170,7 +173,7 @@ int audio_init(void) {
     // Set initial thread parameters
     audio_thread_exit = 0;
     // Initialize the ring buffer
-    ringbuffer_init(&rb_samples, rb_buffer, AUDIO_BUFFER_SAMPLES * AUDIO_CHANNELS, (AUDIO_BIT_DEPTH>>3));
+    ringbuffer_init(&rb_samples, rb_buffer, AUDIO_BUFFER_SAMPLES, (AUDIO_BIT_DEPTH>>3));
     // Start the audio processing thread
     SysCall(SYS_CREATE, (uval32) &audio_thread, (uval32) malloc(STACKSIZE), 1);
     // Successful startup
@@ -234,7 +237,7 @@ int audio_stats(audio_stats_t* stats) {
     stats->bit_depth = AUDIO_BIT_DEPTH;
     stats->sample_rate = AUDIO_SAMPLE_RATE;
     stats->buffer_free = audio_free();
-    stats->buffer_size = AUDIO_BUFFER_SAMPLES * AUDIO_CHANNELS;
+    stats->buffer_size = AUDIO_BUFFER_SAMPLES;
     return 0;
 }
 
