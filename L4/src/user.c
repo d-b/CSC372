@@ -48,13 +48,13 @@ void mymain()
 
   // Audio test routine
   audio_init();
-  sample_t buffer[1024];
+  sample_t buffer[2048];
   wave_sequence_t wav_note_a4;
-  wave_create(&wav_note_a4, NOTES_A4, NOTES_A4_SIZE);
+  int res = wave_create(&wav_note_a4, NOTES_A4, NOTES_A4_SIZE);
   for(;;) {
     int samples;
     while((samples = audio_free()) > 0) {
-      samples = wave_read(&wav_note_a4, buffer, 1024);
+      samples = wave_read(&wav_note_a4, buffer, (samples < 2048) ? samples : 2048);
       audio_send(buffer, samples);
       if(!wave_remaining(&wav_note_a4)) wave_seek(&wav_note_a4, 0);
     }
