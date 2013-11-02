@@ -49,10 +49,16 @@ void mymain()
   // Audio test routine
   audio_init();
   sample_t buffer[1024];
-  int count = audio_sine(buffer, 1024, 150, 100000000);
+  wave_sequence_t wav_note_a4;
+  int res = wave_create(&wav_note_a4, NOTES_A4, NOTES_A4_SIZE);
   for(;;) {
-    while(audio_free() > count)
-      audio_send(buffer, count);
+    int samples;
+    while((samples = audio_free()) > 0) {
+      samples = wave_read(&wav_note_a4, buffer, 1024);
+      audio_send(buffer, samples);
+      if(!wave_remaining(&wav_note_a4)) wave_seek(&wav_note_a4, 0);
+    }
+
     SysCall(SYS_YIELD, 0, 0, 0);
   }
   SysCall(SYS_SUSPEND, 0, 0, 0);

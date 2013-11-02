@@ -15,6 +15,8 @@
 
 // Lab 4 includes
 #include "audio.h"
+#include "wave.h"
+#include "notes.h"
 
 // Platform includes
 #include <stdio.h>

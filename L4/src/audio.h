@@ -9,7 +9,7 @@
 #define _AUDIO_H_
 
 // Audio types
-typedef uval32 sample_t;
+typedef uint32_t sample_t;
 
 // Audio information
 typedef struct {
