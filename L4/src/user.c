@@ -50,7 +50,7 @@ void mymain()
   audio_init();
   sample_t buffer[1024];
   wave_sequence_t wav_note_a4;
-  int res = wave_create(&wav_note_a4, NOTES_A4, NOTES_A4_SIZE);
+  wave_create(&wav_note_a4, NOTES_A4, NOTES_A4_SIZE);
   for(;;) {
     int samples;
     while((samples = audio_free()) > 0) {
