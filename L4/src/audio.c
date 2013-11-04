@@ -48,6 +48,8 @@ static AUDIOPLAY_STATE_T* audio_playstate;
 // Platform independent configuration
 #define AUDIO_BUFFER_SAMPLES AUDIO_BUFFER_FRAMES * AUDIO_CHANNELS
 #define AUDIO_DEVICE_BUFFER_SAMPLES AUDIO_DEVICE_BUFFER_FRAMES * AUDIO_CHANNELS
+#define AUDIO_DFT_WINDOW_SIZE 2048
+#define AUDIO_DFT_HOP_SIZE (AUDIO_DFT_WINDOW_SIZE/4)
 
 // Thread internals
 static sample_t audio_thread_buffer[AUDIO_DEVICE_BUFFER_SAMPLES];
@@ -56,24 +58,6 @@ static int audio_thread_exit;
 // Sample ring buffer
 static sample_t rb_buffer[AUDIO_BUFFER_SAMPLES];
 static ringbuffer_t rb_samples;
-
-// Assert macro
-#ifdef ASSERT
-#undef ASSERT
-#endif
-#define ASSERT(expr) audio_assert((expr),#expr,__FILE__,__LINE__)
-
-/*
- * audio_assert
- *
- * Assert for the audio subsystem
- */
-inline void audio_assert(int success, const char* expr, const char* file, int line) {
-    if(!success) {
-        printk("Audio: Assertion '%s' failed at line %d of file %s!\n", expr, line, file);
-        SysCall(SYS_DESTROY, 0, 0, 0);
-    }
-}
 
 /*
  * min
@@ -206,6 +190,74 @@ int audio_square(sample_t* buffer, int samples, int frequency, int amplitude) {
         for(j = 0; j < AUDIO_CHANNELS; j++)
             buffer[AUDIO_CHANNELS * i + j] = sample;
     } return frames * AUDIO_CHANNELS;
+}
+
+/*
+ * audio_phase_vocoder
+ *
+ * Stretch or compress signal length independent of frequency
+ */
+int audio_vocoder(sample_t* input, sample_t** output, size_t samples, double timescale) {
+    // Allocate output
+    size_t output_size = (size_t)(samples/timescale + AUDIO_DFT_WINDOW_SIZE*AUDIO_CHANNELS);
+    *output = malloc(output_size * sizeof(sample_t));
+    if(*output == NULL) return -1;
+    memset(*output, 0, output_size * sizeof(sample_t));
+
+    // Loop over all channels
+    int chan; for(chan = 0; chan < AUDIO_CHANNELS; chan++) {
+        // Internals
+        double phi[AUDIO_DFT_WINDOW_SIZE];
+        complex_t in[AUDIO_DFT_WINDOW_SIZE + AUDIO_DFT_HOP_SIZE],
+                  out[AUDIO_DFT_WINDOW_SIZE];
+        memset(phi, 0, sizeof(phi));
+        memset(out, 0, sizeof(out));
+
+        // Spectra
+        complex_t spectrum1[AUDIO_DFT_WINDOW_SIZE],
+                  spectrum2[AUDIO_DFT_WINDOW_SIZE];
+
+        // Loop
+        double f_in = 0;
+        int i_in = 0, i_out = 0;
+        while(i_in < samples/AUDIO_CHANNELS - (AUDIO_DFT_WINDOW_SIZE + AUDIO_DFT_HOP_SIZE*AUDIO_CHANNELS)) {
+            // Setup input window
+            i_in = (int) f_in;
+            int i; for(i = 0; i < AUDIO_DFT_WINDOW_SIZE + AUDIO_DFT_HOP_SIZE; i++) {
+                in[i].real = input[(i_in + i)*AUDIO_CHANNELS + chan];
+                in[i].imag = 0;
+            }
+
+            // Compute spectra
+            audio_fft(in, spectrum1, AUDIO_DFT_WINDOW_SIZE);
+            audio_fft(in + AUDIO_DFT_HOP_SIZE, spectrum2, AUDIO_DFT_WINDOW_SIZE);
+
+            // Compute output
+            for(i = 0; i < AUDIO_DFT_WINDOW_SIZE; i++) {
+                // Phase calculation
+                phi[i] += complex_arg(spectrum2[i]) - complex_arg(spectrum1[i]);
+                while(phi[i] < -PI) phi[i] += 2*PI;
+                while(phi[i] >= PI) phi[i] -= 2*PI;
+                // Output calculation
+                double mag  = complex_abs(spectrum2[i]);
+                out[i].real = cos(phi[i])*mag;
+                out[i].imag = sin(phi[i])*mag;
+            }
+
+            // Reconstruct signal
+            audio_ifft(out, out, AUDIO_DFT_WINDOW_SIZE);
+            for(i = 0; i < AUDIO_DFT_WINDOW_SIZE; i++) {
+                (*output)[(i_out + i)*AUDIO_CHANNELS + chan] += out[i].real;
+            }
+
+            // Increment counters
+            i_out += AUDIO_DFT_HOP_SIZE;
+            f_in  += AUDIO_DFT_HOP_SIZE*timescale;
+        }
+    }
+
+    // Success
+    return 0;
 }
 
 /*

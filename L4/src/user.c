@@ -45,12 +45,13 @@ void mymain()
 #ifdef PLATFORM_RPI
   bcm_host_init();
 #endif
-
   // Audio test routine
   audio_init();
   sample_t buffer[2048];
   wave_sequence_t wav_note_a4;
-  int res = wave_create(&wav_note_a4, NOTES_A4, NOTES_A4_SIZE);
+  sample_t* note_a5;
+  wave_create(&wav_note_a4, NOTES_A4, NOTES_A4_SIZE);
+  audio_vocoder((sample_t*) wav_note_a4.data, &note_a5, wav_note_a4.frames * wav_note_a4.channels, 2.0);
   for(;;) {
     int samples;
     while((samples = audio_free()) > 0) {
