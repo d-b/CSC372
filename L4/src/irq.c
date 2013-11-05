@@ -112,12 +112,24 @@ void irql_lower(IRQL* oldirql) {
 void irq_register(int irq, irq_handler_routine routine, int priority) {    
     // Sanity check on IRQ
     if(irq >= IRQ_MAX) return;
+    
+    // IRQ MASK
+    int irq_mask = 0;
 
     IRQL_RAISE_TO_HIGH;
+        // Add interrupt to interrupt vector
         irq_handlers[irq].handler.irq = irq;
         irq_handlers[irq].handler.routine = routine;
         irq_handlers[irq].handler.priority = priority;
         irq_handlers[irq].enabled = TRUE;
+        // Enable interrupt line
+        #ifdef NATIVE
+            asm("rdctl r2, ctl3");
+            asm("stw r2, %0" : "=m"(irq_mask));
+            irq_mask |= (1<<irq);
+            asm("ldw r2, %0" : : "m"(irq_mask) : "r8");
+            asm("wrctl ctl3, r2");
+        #endif
     IRQL_LOWER;
 }
 

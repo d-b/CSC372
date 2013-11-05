@@ -39,27 +39,28 @@ void ThreadExit(void) {
   SysCall(SYS_DESTROY, 0, 0, 0);
 }
 
-void mymain() 
+#define A_NOTE_HZ 440
+#define B_NOTE_HZ 494
+#define C_NOTE_HZ 523
+#define D_NOTE_HZ 587
+#define E_NOTE_HZ 659
+#define F_NOTE_HZ 698
+#define G_NOTE_HZ 784
+
+void mymain()
 {
-// Raspberry Pi initialization
+  // Raspberry Pi initialization
 #ifdef PLATFORM_RPI
   bcm_host_init();
 #endif
-
-  // Audio test routine
+   
+  // Setup audio subsystem
   audio_init();
-  sample_t buffer[2048];
-  wave_sequence_t wav_note_a4;
-  int res = wave_create(&wav_note_a4, NOTES_A4, NOTES_A4_SIZE);
-  for(;;) {
-    int samples;
-    while((samples = audio_free()) > 0) {
-      samples = wave_read(&wav_note_a4, buffer, (samples < 2048) ? samples : 2048);
-      audio_send(buffer, samples);
-      if(!wave_remaining(&wav_note_a4)) wave_seek(&wav_note_a4, 0);
-    }
 
-    SysCall(SYS_YIELD, 0, 0, 0);
-  }
+#ifdef NATIVE
+  // Setup native only sensor subsystem
+  sensor_init();
+#endif
+
   SysCall(SYS_SUSPEND, 0, 0, 0);
 }

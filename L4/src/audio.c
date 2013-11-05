@@ -48,6 +48,8 @@ static AUDIOPLAY_STATE_T* audio_playstate;
 // Platform independent configuration
 #define AUDIO_BUFFER_SAMPLES AUDIO_BUFFER_FRAMES * AUDIO_CHANNELS
 #define AUDIO_DEVICE_BUFFER_SAMPLES AUDIO_DEVICE_BUFFER_FRAMES * AUDIO_CHANNELS
+#define AUDIO_DFT_WINDOW_SIZE 2048
+#define AUDIO_DFT_HOP_SIZE (AUDIO_DFT_WINDOW_SIZE/4)
 
 // Thread internals
 static sample_t audio_thread_buffer[AUDIO_DEVICE_BUFFER_SAMPLES];
@@ -57,23 +59,39 @@ static int audio_thread_exit;
 static sample_t rb_buffer[AUDIO_BUFFER_SAMPLES];
 static ringbuffer_t rb_samples;
 
-// Assert macro
-#ifdef ASSERT
-#undef ASSERT
-#endif
-#define ASSERT(expr) audio_assert((expr),#expr,__FILE__,__LINE__)
-
-/*
- * audio_assert
- *
- * Assert for the audio subsystem
- */
-inline void audio_assert(int success, const char* expr, const char* file, int line) {
-    if(!success) {
-        printk("Audio: Assertion '%s' failed at line %d of file %s!\n", expr, line, file);
-        SysCall(SYS_DESTROY, 0, 0, 0);
-    }
+//
+// Safe access to audio codec
+//
+#ifdef NATIVE
+int audio_device_fifo_left_space() {
+    uval32 value = 0;
+    void* fifospace = (void*) &AUDIO_CODEC_FIFOSPACE;
+    asm("ldw r2, %0" : : "m"(fifospace) : "r2");
+    asm("ldwio r3, 0(r2)" ::: "r3", "r2");
+    asm("stw r3, %0" : "=m"(value) :: "r3");
+    return value & 0xFF000000 >> 24;
 }
+int audio_device_fifo_right_space() {
+    uval32 value = 0;
+    void* fifospace = (void*) &AUDIO_CODEC_FIFOSPACE;
+    asm("ldw r2, %0" : : "m"(fifospace) : "r2");
+    asm("ldwio r3, 0(r2)" ::: "r3", "r2");
+    asm("stw r3, %0" : "=m"(value) :: "r3");
+    return value & 0x00FF0000 >> 16;
+}
+int audio_device_fifo_left_write(sample_t sample) {
+    void* fiforight = (void*) &AUDIO_CODEC_LEFTCHAN;
+    asm("ldw r2, %0" : : "m"(fiforight) : "r2");
+    asm("ldw r3, %0" : : "m"(sample) : "r3");
+    asm("stwio r3, 0(r2)");
+}
+int audio_device_fifo_right_write(sample_t sample) {
+    void* fiforight = (void*) &AUDIO_CODEC_RIGHTCHAN;
+    asm("ldw r2, %0" : : "m"(fiforight) : "r2");
+    asm("ldw r3, %0" : : "m"(sample) : "r3");
+    asm("stwio r3, 0(r2)");
+}
+#endif
 
 /*
  * min
@@ -82,6 +100,15 @@ inline void audio_assert(int success, const char* expr, const char* file, int li
  */
 inline int min(int a, int b) {
     return (a < b) ? a : b;
+}
+
+/*
+ * min
+ *
+ * Find the minimum of two integers
+ */
+inline int max(int a, int b) {
+    return (a > b) ? a : b;
 }
 
 /*
@@ -118,18 +145,16 @@ void audio_thread(void) {
     while(!audio_thread_exit) {
     // Native implementation
     #ifdef NATIVE
-        // See how many samples we should send
-        int count = min(AUDIO_CODEC_FIFOSPACE & 0xFF000000 >> 24,
-                        AUDIO_CODEC_FIFOSPACE & 0x00FF0000 >> 16);
-        count = min(count, AUDIO_DEVICE_BUFFER_FRAMES);
+        int count; while((count = audio_device_fifo_left_space()) > 0) {
+            // Read the required samples from the ring buffer
+            count = ringbuffer_read(&rb_samples, audio_thread_buffer, count * AUDIO_CHANNELS);
+            if(!count) break;
 
-        // Read the required samples from the ring buffer
-        count = ringbuffer_read(&rb_samples, audio_thread_buffer, count * AUDIO_CHANNELS);
-
-        // Send the samples to the audio hardware
-        int i; for(i = 0; i < count; i += AUDIO_CHANNELS) {
-            AUDIO_CODEC_LEFTCHAN  = audio_thread_buffer[i + 0];
-            AUDIO_CODEC_RIGHTCHAN = audio_thread_buffer[i + 1];
+            // Send the samples to the audio hardware
+            int i; for(i = 0; i < count; i += AUDIO_CHANNELS) {
+                audio_device_fifo_left_write(audio_thread_buffer[i + 0]);
+                audio_device_fifo_right_write(audio_thread_buffer[i + 1]);
+            }            
         }
     // Raspberry Pi implementation
     #elif PLATFORM_RPI
@@ -206,6 +231,24 @@ int audio_square(sample_t* buffer, int samples, int frequency, int amplitude) {
         for(j = 0; j < AUDIO_CHANNELS; j++)
             buffer[AUDIO_CHANNELS * i + j] = sample;
     } return frames * AUDIO_CHANNELS;
+}
+
+/*
+ * audio_add
+ *
+ * Add two sample streams together
+ */
+int audio_add(const sample_t* stream1, int samples1, const sample_t* stream2, int samples2, sample_t* output) {
+    int frames = max(samples1, samples2)/AUDIO_CHANNELS;
+    int separation = min(samples1, samples2)/AUDIO_CHANNELS;
+    int i; for(i = 0; i < frames; i++) {
+        int j; for(j = 0; j < AUDIO_CHANNELS; j++) {
+            int x = AUDIO_CHANNELS * i + j;
+            if(i >= separation)
+                output[x] = (samples1 > samples2) ? stream1[x] : stream2[x];
+            else output[x] = stream1[x] + stream2[x];
+        }
+    } return frames;
 }
 
 /*

@@ -15,7 +15,7 @@ static const char id_subchunk_fmt[]   = "fmt ";
 static const char id_subchunk_data[]  = "data";
 
 // WAVE audio header
-#pragma pack(push, 1)
+#pragma pack(1)
 typedef struct {
     // Chunk header
     char     chunk_id[4];
@@ -37,7 +37,6 @@ typedef struct {
     uint32_t data_size;
     char     data_contents[1];
 } wave_header_t;
-#pragma pack(pop)
 
 /*
  * wave_create

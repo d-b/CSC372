@@ -10,12 +10,14 @@
 #ifndef _DEFINES_H_
 #define _DEFINES_H_
 
-//#define NATIVE
+#define NATIVE
 
 #ifdef NATIVE
 typedef unsigned char uval8;
 typedef unsigned int uval32;
 typedef uval32 ThreadId;
+typedef short uint16_t;
+typedef int uint32_t;
 #else
 #define _BSD_SOURCE
 #include "../config.h"

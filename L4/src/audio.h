@@ -23,6 +23,7 @@ typedef struct {
 int audio_init(void);
 int audio_sine(sample_t* buffer, int samples, int frequency, int amplitude);
 int audio_square(sample_t* buffer, int samples, int frequency, int amplitude);
+int audio_add(const sample_t* stream1, int samples1, const sample_t* stream2, int samples2, sample_t* output);
 int audio_send(sample_t* buffer, int samples);
 int audio_free(void);
 int audio_stats(audio_stats_t* stats);
