@@ -17,5 +17,16 @@ pushd $BUILD_PATH/check-0.9.10
 ./configure --prefix=$TARGET_PATH
 make install
 popd
-# cleanup
+
+#
+# FFTW library
+#
+tar xvzfC fftw-3.3.3.tar.gz $BUILD_PATH
+# build the library
+pushd $BUILD_PATH/fftw-3.3.3
+./configure --prefix=$TARGET_PATH
+make install
+popd
+
+# Cleanup
 rm -rf $BUILD_PATH

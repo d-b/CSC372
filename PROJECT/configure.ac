@@ -35,11 +35,12 @@ case "$host_cpu" in
         ;;
 esac
 
-# Add our profile packages
-export PKG_CONFIG_PATH=$HOME/.local/lib/pkgconfig
+# Add package directories
+export PKG_CONFIG_PATH=$HOME/.local/lib/pkgconfig:$PKG_CONFIG_PATH
 
 # Checks for libraries.
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
+PKG_CHECK_MODULES([FFTW3], [fftw3 >= 3.3.3])
 
 # Checks for header files.
 
