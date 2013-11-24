@@ -41,6 +41,7 @@ export PKG_CONFIG_PATH=$HOME/.local/lib/pkgconfig:$PKG_CONFIG_PATH
 # Checks for libraries.
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
 PKG_CHECK_MODULES([FFTW3], [fftw3 >= 3.3.3])
+PKG_CHECK_MODULES([SNDFILE], [sndfile >= 1.0.0])
 
 # Checks for header files.
 

@@ -7,6 +7,10 @@
 
 #include "modem.hpp"
 
+#include <iostream>
+
 int main(int argc, char* argv[]) {
+    Spectrum spec;
+    OFDM ofdm(spec, 1024, 64);
     return 0;
 }

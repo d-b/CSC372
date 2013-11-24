@@ -91,7 +91,19 @@ Bitmap Spectrum::bitmap(void) const {
 OFDM::OFDM(const Spectrum& spectrum, uint32_t fft_size, uint32_t guard_size)
     : spectrum(spectrum), fft_size(fft_size), guard_size(guard_size)
 {
+    // Initialize buffers
+    input  = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * fft_size);
+    output = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * fft_size);
 
+    // Initialize FFT plan
+    plan = fftw_plan_dft_1d(fft_size, input, output, FFTW_FORWARD, FFTW_MEASURE);
+}
+
+OFDM::~OFDM() {
+    // Destroy FFTW objects
+    fftw_destroy_plan(plan);
+    fftw_free(input);
+    fftw_free(output);
 }
 
 Spectrum OFDM::get_spectrum(void) const {

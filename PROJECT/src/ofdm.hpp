@@ -35,7 +35,7 @@ public:
     uint32_t count(void) const;
 
 private:
-    inline static uint32_t bits(void) {
+    constexpr static uint32_t bits(void) {
         return sizeof(field_t)*8;}
     inline uint32_t field(bit_t index) const {
         return index/bits();}
@@ -73,12 +73,14 @@ class OFDM {
     const uint32_t guard_size;
 
     // FFTW context
-    fftw_plan* plan;
-    fftw_complex* buffer;
+    fftw_plan plan;
+    fftw_complex* input;
+    fftw_complex* output;
 
 public:
     // OFDM instance with given spectrum, fft size and guard size
     OFDM(const Spectrum& spectrum, uint32_t fft_size, uint32_t guard_size);
+    virtual ~OFDM();
 
     // Spectrum control
     Spectrum get_spectrum(void) const;

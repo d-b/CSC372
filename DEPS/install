@@ -28,5 +28,15 @@ pushd $BUILD_PATH/fftw-3.3.3
 make install
 popd
 
+#
+# Sndfile library
+#
+tar xvzfC libsndfile-1.0.25.tar.gz $BUILD_PATH
+# build the library
+pushd $BUILD_PATH/libsndfile-1.0.25
+./configure --prefix=$TARGET_PATH
+make install
+popd
+
 # Cleanup
 rm -rf $BUILD_PATH
