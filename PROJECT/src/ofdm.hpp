@@ -12,8 +12,11 @@ class Bitmap {
     typedef uint32_t field_t;
 
     // Internal fields
-    std::bitset<sizeof(field_t)> fields;
+    std::vector<std::bitset<sizeof(field_t)*8>> fields;
     uint32_t total;
+
+    // Resize internal bitmap
+    void resize(uint32_t bits);
 
 public:
     // Types
@@ -21,7 +24,7 @@ public:
 
     // Constructor & copy constructor
     Bitmap() {}
-    Bitmap(Bitmap& bitmap)
+    Bitmap(const Bitmap& bitmap)
         : fields(bitmap.fields) {};
 
     // Methods
@@ -30,6 +33,12 @@ public:
     bool     test(bit_t index) const;
     bit_t    ffs(void) const;
     uint32_t count(void) const;
+
+private:
+    inline static uint32_t bits(void) {
+        return sizeof(field_t)*8;}
+    inline uint32_t field(bit_t index) const {
+        return index/bits();}
 };
 
 class Spectrum {
@@ -41,7 +50,7 @@ public:
 
     // Constructor & copy constructor
     Spectrum() {};
-    Spectrum(Spectrum& spectrum)
+    Spectrum(const Spectrum& spectrum)
         : carriermap(spectrum.carriermap), scalemap(spectrum.scalemap) {};
 
     // Methods
@@ -62,6 +71,10 @@ class OFDM {
     Spectrum spectrum;
     const uint32_t fft_size;
     const uint32_t guard_size;
+
+    // FFTW context
+    fftw_plan* plan;
+    fftw_complex* buffer;
 
 public:
     // OFDM instance with given spectrum, fft size and guard size
