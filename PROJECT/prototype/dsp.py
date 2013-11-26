@@ -44,5 +44,5 @@ def downconvert(signal, frequency, nyquist, bandwidth):
     frequency = width * np.ceil(frequency/width)
     # Perform frequency shift and apply low-pass filter
     period = (nyquist/frequency)*2.0
-    converted = np.array([signal[i]*np.exp(2j*np.pi*(i/period)) for i, x in enumerate(signal)])
+    converted = np.array([signal[i]*np.exp(-2j*np.pi*(i/period)) for i, x in enumerate(signal)])
     return lowpass(converted, bandwidth/2, nyquist)
