@@ -13,16 +13,20 @@ from dsp import synthesize, upconvert, downconvert
 from stream import Stream
 from visualizations import Spectrum, Waveform
 
+# Parameters
+SAMPLE_RATE  = 48000
+NYQUIST_RATE = 24000
+
 # Main routine
 def main():
   # Test sequence
   components = 1024
-  stream = Stream(48000)
+  stream = Stream(SAMPLE_RATE)
   spectrum = Spectrum(stream, components)
   waveform = Waveform(stream, components)
-  y = synthesize([512] + [512]*128 + [0]*768 + [512]*128)
-  y = upconvert(y, 10000)
-  y = downconvert(y, 10000, 12000, 24000)
+  y = synthesize([512] + [512]*128 + [0]*767 + [512]*128)
+  y = upconvert(y, 10000, NYQUIST_RATE)
+  y = downconvert(y, 10000, NYQUIST_RATE, 12000)
   stream.write(y)
   spectrum.tick()
   waveform.tick()

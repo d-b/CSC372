@@ -10,8 +10,8 @@ import numpy as np
 
 class Spectrum:
     def __init__(self, stream, components):
-        # Ensure odd number of components
-        if(components % 2 == 0): components += 1
+        # Ensure an even number of components
+        if(components % 2 != 0): components += 1
 
         # Initialize figure
         self.stream = stream
