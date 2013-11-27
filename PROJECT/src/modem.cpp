@@ -7,10 +7,9 @@
 
 #include "modem.hpp"
 
-#include <iostream>
-
 int main(int argc, char* argv[]) {
-    Spectrum spec;
-    OFDM ofdm(spec, 1024, 64);
+    modem::spectrum spec(1, 48000, 1024);
+    modem::signal sig(spec);
+    modem::soundfile::save("test.wav", sig);
     return 0;
 }
