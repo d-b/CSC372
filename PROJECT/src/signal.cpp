@@ -115,8 +115,8 @@ namespace modem
         double period = (nyquist/frequency)*2.0;
         for(int i = 0; i < channels; i++) {
             for(int j = 0; j < size; j++) {
-                data[i][j] *= exp(std::complex<double>(0, 2)*PI*(i/period));
-                data[i][j]  = std::real(data[i][j]);
+                data[i][j] *= exp(std::complex<double>(0, 2*PI*(j/period)));
+                data[i][j]  = std::real(data[i][j])*2.0;
             }
         }
     }
@@ -132,7 +132,7 @@ namespace modem
         double period = (nyquist/frequency)*2.0;
         for(int i = 0; i < channels; i++)
             for(int j = 0; j < size; j++)
-                data[i][j] *= exp(std::complex<double>(0, -2)*PI*(i/period));
+                data[i][j] *= exp(std::complex<double>(0, -2*PI*(j/period)));
         lowpass(bandwidth/2);
     }
 
@@ -145,6 +145,20 @@ namespace modem
     }
     const channel& signal::operator[] (uint16_t channel) const {
         return data[channel];
+    }
+
+    signal& signal::operator*=(std::complex<double> value) {
+        for(int i = 0; i < channels; i++)
+            for(int j = 0; j < samples(); j++)
+                data[i][j] *= value;
+        return *this;
+    }
+    
+    signal& signal::operator/=(std::complex<double> value) {
+        for(int i = 0; i < channels; i++)
+            for(int j = 0; j < samples(); j++)
+                data[i][j] /= value;
+        return *this;
     }
 
     //
@@ -164,6 +178,7 @@ namespace modem
     spectrum::spectrum(const signal& sig, uint16_t componenets)
         : channels(sig.channels), rate(sig.rate), componenets(componenets)
     {
+        // Perform forwards fast-fourier-transform
         data.resize(channels);
         for(int i = 0; i < channels; i++) {
             data[i].resize(componenets);
@@ -184,11 +199,15 @@ namespace modem
     }
     
     signal spectrum::ifft(void) const {
+        // Perform inverse fast-fourier-transform
         signal sig(channels, rate);
         for(int i = 0; i < channels; i++) {
             sig[i].resize(componenets);
             fft::inverse(data[i], sig[i], componenets);
-        } return sig;
+        }
+        // Normalize and return the synthesized signal
+        sig /= componenets;
+        return sig;
     }
 
     size_t spectrum::samples() const {
@@ -200,5 +219,28 @@ namespace modem
     }
     const channel& spectrum::operator[] (uint16_t channel) const {
         return data[channel];
+    }
+
+    spectrum& spectrum::operator*=(std::complex<double> value) {
+        for(int i = 0; i < channels; i++)
+            for(int j = 0; j < samples(); j++)
+                data[i][j] *= value;
+        return *this;
+    }
+    
+    spectrum& spectrum::operator/=(std::complex<double> value) {
+        for(int i = 0; i < channels; i++)
+            for(int j = 0; j < samples(); j++)
+                data[i][j] /= value;
+        return *this;
+    }
+
+    spectrum& spectrum::operator*=(const spectrum& other) {
+        assert(channels == other.channels);
+        assert(samples() == other.samples());
+        for(int i = 0; i < channels; i++)
+            for(int j = 0; j < samples(); j++)
+                data[i][j] *= other[i][j];
+        return *this;
     }
 }

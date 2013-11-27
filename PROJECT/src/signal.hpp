@@ -65,6 +65,10 @@ namespace modem
         size_t samples() const;
         channel& operator[] (uint16_t channel);
         const channel& operator[] (uint16_t channel) const;
+
+        // Mathematical operations
+        signal& operator*=(std::complex<double> value);
+        signal& operator/=(std::complex<double> value);
     };
 
     class window : public signal {
@@ -103,5 +107,10 @@ namespace modem
         size_t samples() const;
         channel& operator[] (uint16_t channel);
         const channel& operator[] (uint16_t channel) const;
+
+        // Mathematical operations
+        spectrum& operator*=(std::complex<double> value);
+        spectrum& operator/=(std::complex<double> value);
+        spectrum& operator*=(const spectrum& other);
     };
 }
