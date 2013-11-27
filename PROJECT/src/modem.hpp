@@ -26,6 +26,7 @@
 #include <cassert>
 #include <cstring>
 #include <iostream>
+#include <algorithm>
 
 // Third party includes
 #include <fftw3.h>

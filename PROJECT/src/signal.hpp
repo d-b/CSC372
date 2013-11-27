@@ -69,6 +69,10 @@ namespace modem
         // Mathematical operations
         signal& operator*=(std::complex<double> value);
         signal& operator/=(std::complex<double> value);
+
+        // Signal concatenation
+        signal operator+(const signal& other);
+        signal operator*(uint32_t repetitions);
     };
 
     class window : public signal {
@@ -109,8 +113,12 @@ namespace modem
         const channel& operator[] (uint16_t channel) const;
 
         // Mathematical operations
+        spectrum conjugate(void) const;
+        std::complex<double> dot(const spectrum& other) const;
+        std::complex<double> operator^(const spectrum& other) const;
         spectrum& operator*=(std::complex<double> value);
         spectrum& operator/=(std::complex<double> value);
         spectrum& operator*=(const spectrum& other);
+        double correlation(const spectrum& other) const;
     };
 }

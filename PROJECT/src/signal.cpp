@@ -161,6 +161,28 @@ namespace modem
         return *this;
     }
 
+    signal signal::operator+(const signal& other) {
+        // Sanity checks on other signal
+        assert(rate == other.rate);
+        assert(channels == other.channels);
+        // Compute resulting signal
+        signal result(*this);
+        for(int i = 0; i < result.channels; i++)
+            result[i].insert(result[i].end(), other[i].begin(), other[i].end());
+        return result;
+    }
+
+    signal signal::operator*(uint32_t repetitions) {
+        signal result(channels, rate);
+        for(int i = 0; i < channels; i++) {
+            // Build signal of repetitions
+            size_t size = result[i].size();
+            result[i].resize(size * repetitions);
+            for(int j = 0; j < repetitions; j++)
+                result[i].insert(result[i].end(), (*this)[i].begin(), (*this)[i].end());
+        } return result;
+    }
+
     //
     // Window
     //
@@ -212,7 +234,7 @@ namespace modem
 
     size_t spectrum::samples() const {
         return componenets;
-    }    
+    }
 
     channel& spectrum::operator[] (uint16_t channel) {
         return data[channel];
@@ -221,18 +243,46 @@ namespace modem
         return data[channel];
     }
 
-    spectrum& spectrum::operator*=(std::complex<double> value) {
+    spectrum spectrum::conjugate(void) const {
+        spectrum result(*this);
+        std::for_each(result.data.begin(), result.data.end(), [](channel& chan){
+            std::transform(chan.begin(), chan.end(), chan.begin(),
+                [](std::complex<double> sample){
+                    return conj(sample);
+            });
+        });
+    }
+
+    std::complex<double> spectrum::dot(const spectrum& other) const {
+        assert(channels == other.channels);
+        assert(samples() == other.samples());
+        std::complex<double> result = 0.0;
         for(int i = 0; i < channels; i++)
             for(int j = 0; j < samples(); j++)
-                data[i][j] *= value;
-        return *this;
+                result += data[i][j] * conj(other[i][j]);
+        return result;
+    }
+
+    std::complex<double> spectrum::operator^(const spectrum& other) const {
+        return this->dot(other);
+    }
+
+    spectrum& spectrum::operator*=(std::complex<double> value) {
+        std::for_each(data.begin(), data.end(), [&value](channel& chan){
+            std::transform(chan.begin(), chan.end(), chan.begin(),
+                [&value](std::complex<double> sample){
+                    return sample * value;
+            });
+        });
     }
     
     spectrum& spectrum::operator/=(std::complex<double> value) {
-        for(int i = 0; i < channels; i++)
-            for(int j = 0; j < samples(); j++)
-                data[i][j] /= value;
-        return *this;
+        std::for_each(data.begin(), data.end(), [&value](channel& chan){
+            std::transform(chan.begin(), chan.end(), chan.begin(),
+                [&value](std::complex<double> sample){
+                    return sample / value;
+            });
+        });
     }
 
     spectrum& spectrum::operator*=(const spectrum& other) {
@@ -243,4 +293,8 @@ namespace modem
                 data[i][j] *= other[i][j];
         return *this;
     }
+
+    double spectrum::correlation(const spectrum& other) const {
+        return 0;
+    }    
 }

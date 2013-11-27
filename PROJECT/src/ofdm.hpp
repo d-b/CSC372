@@ -35,10 +35,13 @@ namespace modem
         // Equalization parameters
         spectrum equalization_freqresponse;
 
+        // Training & pilot symbols
+        signal training_short;
+        signal training_long;
+
         // Synchronization and interference mitigation mechanisms
         void insert_preamble(signal& sig, uint16_t length);
         void insert_cyclicprefix(signal& sig, uint16_t length);
-        void insert_trainingsymbol(signal& sig);
 
         // Frame detection
         bool frame_test(signal& sig, size_t* offset = NULL);
