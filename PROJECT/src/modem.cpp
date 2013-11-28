@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
         64,    /* symbols             */
         0.0,   /* threshold           */
     
-        6,     /* preamble_length     */
+        10,    /* preamble_length     */
         16     /* cyclicprefix_length */
     };
 
