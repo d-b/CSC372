@@ -20,11 +20,8 @@ namespace modem
             uint16_t symbols;
             double   threshold;
 
-            // Preamble
+            // Preamble & cyclic prefix
             uint16_t preamble_length;
-            uint16_t preamble_frequency;
-
-            // Cyclic prefix
             uint16_t cyclicprefix_length;
         } parameters_t;
 
@@ -35,16 +32,19 @@ namespace modem
         // Equalization parameters
         spectrum equalization_freqresponse;
 
-        // Training & pilot symbols
+        // Training symbols
         signal training_short;
         signal training_long;
 
+        // Training symbol initialization
+        void initialize_symbols(void);
+
         // Synchronization and interference mitigation mechanisms
-        void insert_preamble(signal& sig, uint16_t length);
-        void insert_cyclicprefix(signal& sig, uint16_t length);
+        void insert_preamble(signal& sig);
+        void insert_cyclicprefix(signal& sig);
 
         // Frame detection
-        bool frame_test(signal& sig, size_t* offset = NULL);
+        bool frame_test(signal& sig);
 
     public:
         ofdm(parameters_t parameters);

@@ -113,12 +113,12 @@ namespace modem
         const channel& operator[] (uint16_t channel) const;
 
         // Mathematical operations
-        spectrum conjugate(void) const;
+        std::complex<double> abs(void) const;
         std::complex<double> dot(const spectrum& other) const;
         std::complex<double> operator^(const spectrum& other) const;
+        std::complex<double> correlation(const spectrum& other) const;
         spectrum& operator*=(std::complex<double> value);
         spectrum& operator/=(std::complex<double> value);
         spectrum& operator*=(const spectrum& other);
-        double correlation(const spectrum& other) const;
     };
 }
