@@ -71,8 +71,8 @@ namespace modem
         signal& operator/=(std::complex<double> value);
 
         // Signal concatenation
-        signal operator+(const signal& other);
-        signal operator*(uint32_t repetitions);
+        signal operator+(const signal& other) const;
+        signal operator*(uint32_t repetitions) const;
     };
 
     class window : public signal {
@@ -96,12 +96,12 @@ namespace modem
         // Spectrum parameters
         const uint16_t channels;
         const uint32_t rate;
-        const uint16_t componenets;
+        const uint16_t components;
 
         // Construct a spectrum
         spectrum(const spectrum& spec);
-        spectrum(const signal& sig, uint16_t componenets);
-        spectrum(uint16_t channels, uint32_t rate, uint16_t componenets);
+        spectrum(const signal& sig, uint16_t components);
+        spectrum(uint16_t channels, uint32_t rate, uint16_t components);
 
         // Frequency to time domain
         operator signal(void) const;

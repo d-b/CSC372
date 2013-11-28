@@ -161,7 +161,7 @@ namespace modem
         return *this;
     }
 
-    signal signal::operator+(const signal& other) {
+    signal signal::operator+(const signal& other) const {
         // Sanity checks on other signal
         assert(rate == other.rate);
         assert(channels == other.channels);
@@ -172,7 +172,7 @@ namespace modem
         return result;
     }
 
-    signal signal::operator*(uint32_t repetitions) {
+    signal signal::operator*(uint32_t repetitions) const {
         signal result(channels, rate);
         for(int i = 0; i < channels; i++) {
             // Build signal of repetitions
@@ -194,26 +194,26 @@ namespace modem
     //
 
     spectrum::spectrum(const spectrum& spec)
-        : channels(spec.channels), rate(spec.rate), componenets(spec.componenets), data(spec.data)
+        : channels(spec.channels), rate(spec.rate), components(spec.components), data(spec.data)
     {};
     
-    spectrum::spectrum(const signal& sig, uint16_t componenets)
-        : channels(sig.channels), rate(sig.rate), componenets(componenets)
+    spectrum::spectrum(const signal& sig, uint16_t components)
+        : channels(sig.channels), rate(sig.rate), components(components)
     {
         // Perform forwards fast-fourier-transform
         data.resize(channels);
         for(int i = 0; i < channels; i++) {
-            data[i].resize(componenets);
-            fft::forwards(sig[i], data[i], componenets);
+            data[i].resize(components);
+            fft::forwards(sig[i], data[i], components);
         }
     }
     
-    spectrum::spectrum(uint16_t channels, uint32_t rate, uint16_t componenets)
-        : channels(channels), rate(rate), componenets(componenets)
+    spectrum::spectrum(uint16_t channels, uint32_t rate, uint16_t components)
+        : channels(channels), rate(rate), components(components)
     {
         data.resize(channels);
         for(int i = 0; i < channels; i++)
-            data[i].resize(componenets);
+            data[i].resize(components);
     }
 
     spectrum::operator signal(void) const {
@@ -224,16 +224,16 @@ namespace modem
         // Perform inverse fast-fourier-transform
         signal sig(channels, rate);
         for(int i = 0; i < channels; i++) {
-            sig[i].resize(componenets);
-            fft::inverse(data[i], sig[i], componenets);
+            sig[i].resize(components);
+            fft::inverse(data[i], sig[i], components);
         }
         // Normalize and return the synthesized signal
-        sig /= componenets;
+        sig /= components;
         return sig;
     }
 
     size_t spectrum::samples() const {
-        return componenets;
+        return components;
     }
 
     channel& spectrum::operator[] (uint16_t channel) {

@@ -16,13 +16,14 @@ namespace modem
     ofdm::ofdm(parameters_t parameters)
         : parameters(parameters),
           equalization_freqresponse(1, parameters.rate, parameters.points),
-          training_short(1, parameters.rate), training_long(1, parameters.rate)
+          training_short(1, parameters.rate),
+          training_short_spectrum(1, parameters.rate, TRAINING_SHORT_POINTS)
     {initialize_symbols();}
 
     void ofdm::initialize_symbols(void) {
         // Setup short training symbol
-        size_t len = TRAINING_SHORT_POINTS;
-        spectrum spec(1, parameters.rate, len);
+        spectrum& spec = training_short_spectrum;
+        size_t    len  = training_short_spectrum.components;
         spec[0][2       + 4*0] = std::complex<double>(-1,  1);
         spec[0][2       + 4*1] = std::complex<double>( 1, -1);
         spec[0][2       + 4*2] = std::complex<double>( 1, -1);
@@ -48,7 +49,7 @@ namespace modem
         sig[0].insert(sig[0].begin(), sig[0].end() - length, sig[0].end());
     }
 
-    bool ofdm::frame_test(signal& sig) {
+    bool ofdm::frame_test(const signal& sig) {
         // Symbol size
         size_t symsize = training_short[0].size();
 
@@ -70,10 +71,13 @@ namespace modem
             spectrum spec1(symbol1, TRAINING_SHORT_POINTS);
             spectrum spec2(symbol2, TRAINING_SHORT_POINTS);
             double correlation = abs(spec1.correlation(spec2));
-            
-            // Check correlation
+
+            // Test 1: Check correlation between symbols
             if(correlation > parameters.threshold)
-                return true;
+                // Test 2: Test correlation between symbol and expected training symbol
+                correlation = abs(spec1.correlation(training_short_spectrum));
+                if(correlation > parameters.threshold)
+                    return true;
         }
 
         // No correlation found
