@@ -81,11 +81,12 @@ namespace modem
             double correlation = abs(spec1.correlation(spec2));
 
             // Test 1: Check correlation between symbols
-            if(correlation > parameters.threshold)
+            if(correlation > parameters.threshold) {
                 // Test 2: Test correlation between symbol and expected training symbol
                 correlation = abs(spec1.correlation(training_short_spectrum));
                 if(correlation > parameters.threshold)
                     return true;
+            }
         }
 
         // No correlation found
@@ -93,10 +94,13 @@ namespace modem
     }
 
     void ofdm::tick(double deltatime) {
+        static signal buff(1, 48000);
         signal sig1(1, parameters.rate);
-        signal sig2(1, parameters.rate);
-        insert_preamble(sig2);
         ext.med->input(sig1);
-        ext.med->output(sig2);
+        buff = buff + sig1;
+        if(frame_test(buff))
+            std::cout << "SIGNAL DETECTED!" << std::endl;
+        if(buff[0].size() > parameters.preamble_length * training_short[0].size())
+            buff = signal(1, 48000);
     }
 }

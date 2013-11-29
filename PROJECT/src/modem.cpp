@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
         5000,  /* carrier             */
         0,     /* bandwidth           */
         64,    /* symbols             */
-        0.0,   /* threshold           */
+        0.75,  /* threshold           */
     
         10,    /* preamble_length     */
         16     /* cyclicprefix_length */
@@ -28,8 +28,8 @@ int main(int argc, char* argv[]) {
     };
 
     // Setup OFDM instance
-    modem::ofdm ofdm(parameters, NULL, NULL, NULL);
-    modem::medium_alsa med("default", "default", 48000, 1024, 128);
+    modem::medium_alsa med("default", "default", 48000, 1024, 64);
+    modem::ofdm ofdm(parameters, &med, NULL, NULL);
     
     // Main loop
     for(;;) {

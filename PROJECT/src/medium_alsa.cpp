@@ -163,7 +163,7 @@ namespace modem
 
         // Conditionally add FDs for output device
         if(!buffer_output.empty())
-            for(auto fd = ufds_output.begin(); fd != ufds_input.end(); ++fd) {
+            for(auto fd = ufds_output.begin(); fd != ufds_output.end(); ++fd) {
                 if(fd->events & POLLIN ) FD_SET(fd->fd, read_fds);
                 if(fd->events & POLLOUT) FD_SET(fd->fd, write_fds);
                 if(fd->events & (POLLIN | POLLOUT))
@@ -186,10 +186,13 @@ namespace modem
     medium::response medium_alsa::input(signal& sig) {
         sig[0].insert(sig[0].end(), buffer_input.begin(), buffer_input.end());
         buffer_input.clear();
+        return MEDIUM_Okay;
     }    
 
     medium::response medium_alsa::output(const signal& sig) {
+        if(!buffer_output.empty()) return MEDIUM_Error;
         buffer_output.insert(buffer_output.end(), sig[0].begin(), sig[0].end());
+        return MEDIUM_Okay;
     }
 
     void medium_alsa::tick(double deltatime) {
@@ -197,15 +200,32 @@ namespace modem
         snd_pcm_sframes_t frames = 0;
 
         // Try to read frames
+        buffer.resize(buffer_size);
         if((frames = snd_pcm_readi(handle_input, buffer.data(), buffer.size())) > 0)
             buffer_input.insert(buffer_input.end(), buffer.begin(), buffer.begin() + frames);
+        else if(frames != -EAGAIN) {
+            std::stringstream error; int res;
+            if((res = snd_pcm_recover(handle_input, frames, 1)) < 0) {
+                error << "cannot recover from input error (" << snd_strerror(res) << ")";
+                throwx(alsa_exception(error.str()));                
+            }
+        }
 
         // Try to write frames
-        size_t size = std::min(buffer.size(), buffer_output.size()); if(size > 0) {
-            int i = 0; for(auto iter = buffer_output.begin();
-                iter != buffer_output.end(); iter++) buffer[i++] = real(*iter);
-            if((frames = snd_pcm_writei(handle_output, buffer.data(), buffer.size())) > 0)
+        size_t size = std::min((size_t) buffer_size, buffer_output.size()); if(size > 0) {
+            buffer.clear(); std::for_each(buffer_output.begin(), buffer_output.begin() + size,
+                [this](const std::complex<double>& val){
+                    this->buffer.push_back(real(val));
+                });
+            if((frames = snd_pcm_writei(handle_output, buffer.data(), size)) > 0)
                 buffer_output.erase(buffer_output.begin(), buffer_output.begin() + frames);
+            else if(frames != -EAGAIN) {
+                std::stringstream error; int res;
+                if((res = snd_pcm_recover(handle_output, frames, 1)) < 0) {
+                    error << "cannot recover from output error (" << snd_strerror(res) << ")";
+                    throwx(alsa_exception(error.str()));                
+                }
+            }
         }
     }
 }
