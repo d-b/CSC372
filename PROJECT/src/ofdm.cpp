@@ -84,8 +84,10 @@ namespace modem
             if(correlation > parameters.threshold) {
                 // Test 2: Test correlation between symbol and expected training symbol
                 correlation = abs(spec1.correlation(training_short_spectrum));
-                if(correlation > parameters.threshold)
+                if(correlation > parameters.threshold) {
+                    std::cout << correlation << std::endl;
                     return true;
+                }
             }
         }
 
@@ -94,6 +96,7 @@ namespace modem
     }
 
     void ofdm::tick(double deltatime) {
+        // Read signal and test it
         static signal buff(1, 48000);
         signal sig1(1, parameters.rate);
         ext.med->input(sig1);
@@ -102,5 +105,8 @@ namespace modem
             std::cout << "SIGNAL DETECTED!" << std::endl;
         if(buff[0].size() > parameters.preamble_length * training_short[0].size())
             buff = signal(1, 48000);
+
+        // Write training signal to speaker
+        ext.med->output(training_short*100);
     }
 }
