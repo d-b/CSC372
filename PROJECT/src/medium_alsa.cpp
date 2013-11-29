@@ -51,7 +51,7 @@ namespace modem
             throwx(alsa_exception(error.str()));
         }
     
-        if ((res = snd_pcm_hw_params_set_format(handle_input, hw_params, SND_PCM_FORMAT_S16_LE)) < 0) {
+        if ((res = snd_pcm_hw_params_set_format(handle_input, hw_params, SND_PCM_FORMAT_FLOAT64)) < 0) {
             error << "cannot set sample format (" << snd_strerror(res) << ")";
             throwx(alsa_exception(error.str()));
         }
