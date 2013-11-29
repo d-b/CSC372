@@ -84,10 +84,8 @@ namespace modem
             if(correlation > parameters.threshold) {
                 // Test 2: Test correlation between symbol and expected training symbol
                 correlation = abs(spec1.correlation(training_short_spectrum));
-                if(correlation > parameters.threshold) {
-                    std::cout << correlation << std::endl;
+                if(correlation > parameters.threshold)
                     return true;
-                }
             }
         }
 
