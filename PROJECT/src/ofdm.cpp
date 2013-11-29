@@ -13,12 +13,20 @@
 
 namespace modem
 {
-    ofdm::ofdm(parameters_t parameters)
-        : parameters(parameters),
-          equalization_freqresponse(1, parameters.rate, parameters.points),
-          training_short(1, parameters.rate),
-          training_short_spectrum(1, parameters.rate, TRAINING_SHORT_POINTS)
-    {initialize_symbols();}
+    ofdm::ofdm(parameters_t parameters,
+               medium*      physical_medium,
+               modulator*   subcarrier_modulator,
+               stream*      packet_stream) :
+        parameters(parameters),
+        equalization_freqresponse(1, parameters.rate, parameters.points),
+        training_short(1, parameters.rate),
+        training_short_spectrum(1, parameters.rate, TRAINING_SHORT_POINTS)
+    {
+        ext.med  = physical_medium;
+        ext.mod  = subcarrier_modulator;
+        ext.strm = packet_stream;
+        initialize_symbols();
+    }
 
     void ofdm::initialize_symbols(void) {
         // Setup short training symbol

@@ -22,6 +22,7 @@ int main(int argc, char* argv[]) {
     };
 
     // Setup OFDM instance
-    modem::ofdm ofdm(parameters);
+    modem::ofdm ofdm(parameters, NULL, NULL, NULL);
+    modem::medium_alsa med("default", 48000, 1024);
     return 0;
 }

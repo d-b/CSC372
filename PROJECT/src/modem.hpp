@@ -15,6 +15,7 @@
 #include <math.h>
 
 // Standard C++11 includes
+#include <exception>
 #include <tuple>
 #include <vector>
 #include <map>
@@ -26,14 +27,20 @@
 #include <cassert>
 #include <cstring>
 #include <iostream>
+#include <sstream>
 #include <algorithm>
 
 // Third party includes
 #include <fftw3.h>
 #include <sndfile.h>
+#include <alsa/asoundlib.h>
 
 // Project includes
-#include "hash.hpp"      // Hashing helper routines
-#include "signal.hpp"    // Signal processing routines
-#include "soundfile.hpp" // Sound file routines
-#include "ofdm.hpp"      // Orthogonal frequency-division multiplexing
+#include "exception.hpp"   // Global exception type
+#include "hash.hpp"        // Hashing helper routines
+#include "signal.hpp"      // Signal processing routines
+#include "soundfile.hpp"   // Sound file routines
+#include "ofdm.hpp"        // Orthogonal frequency-division multiplexing
+
+// OFDM modules
+#include "medium_alsa.hpp" // ALSA communications medium
