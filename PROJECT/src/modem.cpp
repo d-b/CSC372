@@ -21,8 +21,22 @@ int main(int argc, char* argv[]) {
         16     /* cyclicprefix_length */
     };
 
+    // Timeout parameters
+    timeval timeout = {
+        1, /* tv_sec  */
+        0, /* tv_usec */
+    };
+
     // Setup OFDM instance
     modem::ofdm ofdm(parameters, NULL, NULL, NULL);
     modem::medium_alsa med("default", "default", 48000, 1024, 128);
+    
+    // Main loop
+    for(;;) {
+        med.wait(&timeout);
+        med.tick(0);
+        ofdm.tick(0);
+    }
+
     return 0;
 }

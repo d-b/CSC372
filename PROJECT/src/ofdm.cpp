@@ -91,4 +91,12 @@ namespace modem
         // No correlation found
         return false;
     }
+
+    void ofdm::tick(double deltatime) {
+        signal sig1(1, parameters.rate);
+        signal sig2(1, parameters.rate);
+        insert_preamble(sig2);
+        ext.med->input(sig1);
+        ext.med->output(sig2);
+    }
 }

@@ -15,8 +15,8 @@ namespace modem
     class medium {
     public:
         enum response { MEDIUM_Okay, MEDIUM_Error };
+        virtual response input(signal& sig)        = 0;        
         virtual response output(const signal& sig) = 0;
-        virtual response input(signal& sig)        = 0;
     };
 
     class modulator {
