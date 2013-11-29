@@ -13,9 +13,9 @@ namespace modem
         // Device parameters
         const uint16_t rate;
         const uint16_t buffer_size;
+        const uint16_t period_size;
 
         // ALSA device initialization
-        std::vector<uint8_t> buffer;
         snd_pcm_t* handle_input;
         snd_pcm_t* handle_output;
         void initialize_device(snd_pcm_t** handle, const char* device, snd_pcm_stream_t stream);
@@ -30,7 +30,7 @@ namespace modem
         };
 
         // Construct an ALSA medium with the specified sample rate and buffer size
-        medium_alsa(const char* device_input, const char* device_output, uint16_t rate, size_t buffer_size);
+        medium_alsa(const char* device_input, const char* device_output, uint16_t rate, size_t buffer_size, size_t period_size);
 
         // Input/utput
         response output(const signal& sig);
