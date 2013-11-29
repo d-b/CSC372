@@ -115,9 +115,17 @@ namespace modem
             throwx(alsa_exception(error.str()));
         }
 
-        // Prepare interface for use
+        //
+        // Start interface
+        //
+
         if ((res = snd_pcm_prepare(*handle)) < 0) {
             error << "cannot prepare audio interface for use (" << snd_strerror(res) << ")";
+            throwx(alsa_exception(error.str()));
+        }
+
+        if ((res = snd_pcm_prepare(*handle)) < 0) {
+            error << "cannot start interface (" << snd_strerror(res) << ")";
             throwx(alsa_exception(error.str()));
         }
     }
