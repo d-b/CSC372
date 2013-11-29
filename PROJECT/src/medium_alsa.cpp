@@ -19,19 +19,21 @@ namespace modem
         return ss.str().c_str();
     }    
 
-    medium_alsa::medium_alsa(const char* device, uint16_t rate, size_t buffer_size)
-        : rate(rate), buffer_size(buffer_size), device(device)
+    medium_alsa::medium_alsa(const char* device_input, const char* device_output, uint16_t rate, size_t buffer_size)
+        : rate(rate), buffer_size(buffer_size)
     {
         buffer.resize(buffer_size);
-        initialize_alsa();
+        initialize_device(&handle_input, device_input, SND_PCM_STREAM_CAPTURE);
+        initialize_device(&handle_output, device_input, SND_PCM_STREAM_PLAYBACK);
     }
 
-    void medium_alsa::initialize_alsa() {
+    void medium_alsa::initialize_device(snd_pcm_t** handle, const char* device, snd_pcm_stream_t stream) {
+
         snd_pcm_hw_params_t *hw_params;
         std::stringstream error; int res;
         unsigned int samplerate = rate;
     
-        if ((res = snd_pcm_open(&handle_input, device.c_str(), SND_PCM_STREAM_CAPTURE, 0)) < 0) {
+        if ((res = snd_pcm_open(handle, device, stream, 0)) < 0) {
             error << "cannot open audio device " << snd_strerror(res) << res;
             throwx(alsa_exception(error.str()));
         }
@@ -41,32 +43,32 @@ namespace modem
             throwx(alsa_exception(error.str()));
         }
                  
-        if ((res = snd_pcm_hw_params_any(handle_input, hw_params)) < 0) {
+        if ((res = snd_pcm_hw_params_any(*handle, hw_params)) < 0) {
             error << "cannot initialize hardware parameters structure (" << snd_strerror(res) << ")";
             throwx(alsa_exception(error.str()));
         }
     
-        if ((res = snd_pcm_hw_params_set_access(handle_input, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
+        if ((res = snd_pcm_hw_params_set_access(*handle, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
             error << "cannot initialize hardware parameters structure (" << snd_strerror(res) << ")";
             throwx(alsa_exception(error.str()));
         }
     
-        if ((res = snd_pcm_hw_params_set_format(handle_input, hw_params, SND_PCM_FORMAT_FLOAT64)) < 0) {
+        if ((res = snd_pcm_hw_params_set_format(*handle, hw_params, SND_PCM_FORMAT_FLOAT64)) < 0) {
             error << "cannot set sample format (" << snd_strerror(res) << ")";
             throwx(alsa_exception(error.str()));
         }
     
-        if ((res = snd_pcm_hw_params_set_rate_near(handle_input, hw_params, &samplerate, 0)) < 0) {
+        if ((res = snd_pcm_hw_params_set_rate_near(*handle, hw_params, &samplerate, 0)) < 0) {
             error << "cannot set sample format (" << snd_strerror(res) << ")";
             throwx(alsa_exception(error.str()));
         }
     
-        if ((res = snd_pcm_hw_params_set_channels(handle_input, hw_params, 1)) < 0) {
+        if ((res = snd_pcm_hw_params_set_channels(*handle, hw_params, 1)) < 0) {
             error << "cannot set channel count (" << snd_strerror(res) << ")";
             throwx(alsa_exception(error.str()));
         }
     
-        if ((res = snd_pcm_hw_params(handle_input, hw_params)) < 0) {
+        if ((res = snd_pcm_hw_params(*handle, hw_params)) < 0) {
             error << "cannot set channel count (" << snd_strerror(res) << ")";
             throwx(alsa_exception(error.str()));
         } snd_pcm_hw_params_free (hw_params);
