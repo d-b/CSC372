@@ -67,7 +67,7 @@ namespace modem
 
         // OFDM parameters
         parameters_t parameters;
-        spectrum equalization_freqresponse;        
+        spectrum equalization_freqresponse;
 
         // Training symbols
         signal   training_short;
@@ -79,7 +79,7 @@ namespace modem
         //
         // Sender
         //
-       
+
         // Synchronization and interference mitigation mechanisms
         void insert_preamble(signal& sig);
         void insert_cyclicprefix(signal& sig);
