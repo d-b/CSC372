@@ -20,7 +20,8 @@ namespace modem
         parameters(parameters),
         equalization_freqresponse(1, parameters.rate, parameters.points),
         training_short(1, parameters.rate),
-        training_short_spectrum(1, parameters.rate, TRAINING_SHORT_POINTS)
+        training_short_spectrum(1, parameters.rate, TRAINING_SHORT_POINTS),
+        frame(1, parameters.rate)
     {
         ext.med  = physical_medium;
         ext.mod  = subcarrier_modulator;

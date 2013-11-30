@@ -135,6 +135,10 @@ namespace modem
         lowpass(bandwidth/2);
     }
 
+    void clear(void) {
+        std::for_each(data.begin(), data.end(), [](channel& chan){chan.clear()});
+    }
+
     size_t signal::samples() const {
         return data[0].size();
     }

@@ -82,12 +82,20 @@ namespace modem
         void insert_preamble(signal& sig);
         void insert_cyclicprefix(signal& sig);
 
+        // Main loop
+        void tick_sender(double deltatime);
+
         //
         // Receiving
         //
 
+        signal frame;
+
         // Frame detection
         bool frame_test(const signal& sig);
+
+        // Main loop
+        void tick_receiver(double deltatime);
 
     public:
         ofdm(parameters_t parameters,
