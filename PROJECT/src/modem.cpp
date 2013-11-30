@@ -12,13 +12,13 @@ int main(int argc, char* argv[]) {
     modem::ofdm::parameters_t parameters = {
         48000, /* rate                */
         1024,  /* points              */
-        64,    /* symbols             */
+        10,    /* symbols             */
         5000,  /* carrier             */
-        1000,  /* bandwidth           */
+        9000,  /* bandwidth           */
         0.75,  /* threshold           */
     
         10,    /* preamble_length     */
-        16     /* cyclicprefix_length */
+        200,   /* cyclicprefix_length */
     };
 
     // Timeout parameters
