@@ -10,19 +10,18 @@
 namespace modem
 {
     modulator::response modulator_naive::modulate(const std::vector<byte>& input, spectrum& output) {
-        output[0][01] = 10.0;
-        output[0][10] = 10.0;
-        output[0][20] = 10.0;
-        output[0][30] = 10.0;
-        output[0][40] = 10.0;
+        static int counter = 0;
+        output[0][counter++ % 50] = 10.0;
         return MODULATOR_Okay;
     }
     
     modulator::response modulator_naive::demodulate(std::vector<byte>& output, const spectrum& input) {
         std::cout << "Spectrum (" << input.components << "):" << std::endl;
-        for(int i = 0; i < input.components; i++) {
-            double mag = abs(input[0][i]);
-            if(mag > 5.0)
+        spectrum normalized(input);
+        normalized /= normalized.abs();
+        for(int i = 0; i < normalized.components; i++) {
+            double mag = abs(normalized[0][i]);
+            if(mag > 0.5)
                 std::cout << "X[" << i << "]: " << mag << std::endl;
         } return MODULATOR_DemodulationError;
     }
