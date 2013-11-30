@@ -43,13 +43,12 @@ namespace modem
         // Construct an ALSA medium with the specified sample rate and buffer size
         medium_alsa(const char* device_input, const char* device_output, uint16_t rate, size_t buffer_size, size_t period_size);
 
-        // Tick function
+        // Progress
         void tick(double deltatime);
-
-        // Wait for events
-        int wait(timeval* timeout);
+        int  wait(timeval* timeout);
 
         // Input/output
+        duplex   mode(void);
         response input(signal& sig);
         response output(const signal& sig);
     };

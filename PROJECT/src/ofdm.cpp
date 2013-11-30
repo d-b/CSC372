@@ -17,16 +17,22 @@ namespace modem
                medium*      physical_medium,
                modulator*   subcarrier_modulator,
                stream*      packet_stream) :
+        // Parameters
         parameters(parameters),
         equalization_freqresponse(1, parameters.rate, parameters.points),
         training_short(1, parameters.rate),
         training_short_spectrum(1, parameters.rate, TRAINING_SHORT_POINTS),
-        frame(1, parameters.rate)
+        // Receiving
+        receiver_frame(1, parameters.rate)
     {
+        // Initialize internals
         ext.med  = physical_medium;
         ext.mod  = subcarrier_modulator;
         ext.strm = packet_stream;
         initialize_symbols();
+
+        // Start receiver in initial state
+        receiver_goto(RSTATE_WaitingForSignal);
     }
 
     void ofdm::initialize_symbols(void) {
@@ -57,6 +63,10 @@ namespace modem
         size_t length = parameters.cyclicprefix_length;
         sig[0].insert(sig[0].begin(), sig[0].end() - length, sig[0].end());
     }
+
+    
+    void ofdm::sender_tick(double deltatime) {
+    }    
 
     bool ofdm::frame_test(const signal& sig) {
         // Symbol size
@@ -93,19 +103,89 @@ namespace modem
         // No correlation found
         return false;
     }
-    
-    void ofdm::tick_sender(double deltatime) {
+
+    void ofdm::receiver_process(const signal& frame) {
+        // Compute the spectrum and perform subcarrier demodulation
+        std::vector<byte> payload;
+        spectrum spec(frame, parameters.points);
+        modulator::response res = ext.mod->demodulate(payload, spec); switch(res) {
+            case modulator::MODULATOR_Okay:
+                // Pass the payload onto the stream handler
+                ext.strm->incomming(payload); break;
+            case modulator::MODULATOR_NeedMore:
+                break;
+            case modulator::MODULATOR_DemodulationError:
+                receiver_frame_errors += 1;
+                break;
+        }
     }
 
-    void ofdm::tick_receiver(double deltatime) {
-        // Receive data from medium
+    void ofdm::receiver_training(void) {
+        // TODO: add coarse and fine frequency adjustment techniques
+    }
+
+    void ofdm::receiver_goto(rstate state) {
+        switch(state) {
+            case RSTATE_WaitingForSignal:
+                receiver_state = RSTATE_WaitingForSignal;
+                receiver_frame.clear();
+                receiver_frame_errors = 0;
+                break;
+
+            case RSTATE_WaitingForFrame:
+                receiver_state = RSTATE_WaitingForFrame;
+                receiver_frame_count = 0;
+                break;
+        }
+    }
+
+    void ofdm::receiver_tick(double deltatime) {
+        // If medium is not currently in handling input reset receiver state and bail out
+        if(!(ext.med->mode() | medium::DUPLEX_Input)) {
+            receiver_goto(RSTATE_WaitingForSignal); return;
+        }
+
+        // Read data from medium
         signal sig(1, parameters.rate);
         ext.med->input(sig);
-        frame += sig;
+        receiver_frame += sig;
+
+        switch(receiver_state) {
+            // Signal acquisition phase
+            case RSTATE_WaitingForSignal: {
+                // Test frame for signal
+                if(frame_test(receiver_frame)) {
+                    // Perform training operation
+
+                    // Remove preamble from frame
+                    size_t samples = parameters.preamble_length * training_short[0].size();
+                    samples = std::min(receiver_frame[0].size(), samples);
+                    receiver_frame[0].erase(receiver_frame[0].begin(), receiver_frame[0].begin() + samples);
+                    // Start waiting for OFDM frames
+                    receiver_goto(RSTATE_WaitingForFrame);
+                }
+            }; break;
+
+            // Frame processing phase
+            case RSTATE_WaitingForFrame: {
+                // See if we have a complete frame
+                size_t frame_size = parameters.points;
+                if(receiver_frame[0].size() >= frame_size) {
+                    // Process the frame
+                    signal frame(1, parameters.rate);
+                    frame[0].insert(frame[0].begin(), receiver_frame[0].begin(), receiver_frame[0].begin() + frame_size);
+                    receiver_frame[0].erase(receiver_frame[0].begin(), receiver_frame[0].begin() + frame_size);
+                    receiver_process(frame); receiver_frame_count += 1;
+                    // See if we need to switch back to the signal acquisition state
+                    if(receiver_frame_count >= parameters.symbols)
+                        receiver_goto(RSTATE_WaitingForSignal);
+                }
+            }; break;
+        }
     }
 
     void ofdm::tick(double deltatime) {
-        tick_receiver(deltatime); // Receiver update
-        tick_sender  (deltatime); // Sender update
+        receiver_tick(deltatime); // Receiver update
+        sender_tick  (deltatime); // Sender update
     }
 }

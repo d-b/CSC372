@@ -43,4 +43,7 @@
 #include "ofdm.hpp"        // Orthogonal frequency-division multiplexing
 
 // OFDM modules
-#include "medium_alsa.hpp" // ALSA communications medium
+#include "medium_alsa.hpp"     // ALSA communications medium
+#include "modulator_naive.hpp" // Naive subcarrier modulation
+#include "modulator_qam.hpp"   // Quadrature amplitude modulation based subcarrier modulation
+ 

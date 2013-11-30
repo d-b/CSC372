@@ -14,8 +14,10 @@ namespace modem
 
     class medium {
     public:
+        enum duplex   { DUPLEX_Input = 1, DUPLEX_Output = 2, DUPLEX_Full = (DUPLEX_Input | DUPLEX_Output) };
         enum response { MEDIUM_Okay, MEDIUM_Error };
-        virtual response input(signal& sig)        = 0;        
+        virtual duplex   mode(void)                = 0;
+        virtual response input(signal& sig)        = 0;
         virtual response output(const signal& sig) = 0;
     };
 
@@ -83,19 +85,30 @@ namespace modem
         void insert_cyclicprefix(signal& sig);
 
         // Main loop
-        void tick_sender(double deltatime);
+        void sender_tick(double deltatime);
 
         //
         // Receiving
         //
 
-        signal frame;
+        enum rstate {
+            RSTATE_WaitingForSignal,
+            RSTATE_WaitingForFrame,
+        };
+
+        rstate receiver_state;
+        signal receiver_frame;
+        size_t receiver_frame_count;
+        size_t receiver_frame_errors;
 
         // Frame detection
         bool frame_test(const signal& sig);
 
         // Main loop
-        void tick_receiver(double deltatime);
+        void receiver_process(const signal& frame);
+        void receiver_training(void);
+        void receiver_goto(rstate state);
+        void receiver_tick(double deltatime);
 
     public:
         ofdm(parameters_t parameters,

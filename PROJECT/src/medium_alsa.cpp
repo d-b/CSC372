@@ -183,6 +183,10 @@ namespace modem
         return select(maxfd + 1, &read_fds, &write_fds, NULL, timeout);
     }
 
+    medium::duplex medium_alsa::mode(void) {
+        return DUPLEX_Full;
+    }
+
     medium::response medium_alsa::input(signal& sig) {
         sig[0].insert(sig[0].end(), buffer_input.begin(), buffer_input.end());
         buffer_input.clear();
