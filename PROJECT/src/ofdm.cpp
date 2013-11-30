@@ -46,9 +46,9 @@ namespace modem
         spec[0][2       + 4*0] = std::complex<double>(-1,  1);
         spec[0][2       + 4*1] = std::complex<double>( 1, -1);
         spec[0][2       + 4*2] = std::complex<double>( 1, -1);
-        spec[0][len - 3 - 4*2] = std::complex<double>( 1,  1);
-        spec[0][len - 3 - 4*1] = std::complex<double>( 1,  1);
-        spec[0][len - 3 - 4*0] = std::complex<double>(-1, -1);
+        spec[0][len - 2 - 4*2] = std::complex<double>( 1,  1);
+        spec[0][len - 2 - 4*1] = std::complex<double>( 1,  1);
+        spec[0][len - 2 - 4*0] = std::complex<double>(-1, -1);
         // Synthesize the signal
         training_short = spec;
         training_short[0].erase(training_short[0].begin() + len/2, training_short[0].end());
