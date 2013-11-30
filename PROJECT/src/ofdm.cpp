@@ -17,12 +17,11 @@ namespace modem
                medium*      physical_medium,
                modulator*   subcarrier_modulator,
                stream*      packet_stream) :
-        // Parameters
+        // Common
         parameters(parameters),
         equalization_freqresponse(1, parameters.rate, parameters.points),
         training_short(1, parameters.rate),
         training_short_spectrum(1, parameters.rate, TRAINING_SHORT_POINTS),
-        // Receiving
         receiver_frame(1, parameters.rate)
     {
         // Initialize internals
@@ -70,7 +69,23 @@ namespace modem
 
     
     void ofdm::sender_tick(double deltatime) {
+        // If medium is not currently in handling output bail out
+        if(!(ext.med->mode() | medium::DUPLEX_Output)) return;
 
+        // Fetch data from the stream
+        std::vector<byte> data;
+        stream::response sres = ext.strm->outgoing(data);
+        if(sres != stream::STREAM_Okay || data.empty()) return;
+
+        // Send data to the modulator
+        spectrum spec(1, parameters.rate, parameters.points);
+        if(ext.mod->modulate(data, spec) == modulator::MODULATOR_Okay) {
+            // Synthesize the signal and convert it up to passband
+            signal frame(spec);
+            frame.upconvert(parameters.carrier);
+            // Pass the frame on to the medium
+            ext.med->output(frame);
+        }
     }
 
     //

@@ -30,7 +30,7 @@ namespace modem
 
     class stream {
     public:
-        enum response { STREA_Okay, STREAM_Error };
+        enum response { STREAM_Okay, STREAM_Error };
         virtual response incomming(const std::vector<byte>& data) = 0;
         virtual response outgoing(std::vector<byte>& data)        = 0;
     };
@@ -77,9 +77,9 @@ namespace modem
         void initialize_symbols(void);
 
         //
-        // Sending
+        // Sender
         //
-
+       
         // Synchronization and interference mitigation mechanisms
         void insert_preamble(signal& sig);
         void insert_cyclicprefix(signal& sig);
@@ -88,7 +88,7 @@ namespace modem
         void sender_tick(double deltatime);
 
         //
-        // Receiving
+        // Receiver
         //
 
         enum rstate {
