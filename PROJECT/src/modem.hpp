@@ -46,4 +46,4 @@
 #include "medium_alsa.hpp"     // ALSA communications medium
 #include "modulator_naive.hpp" // Naive subcarrier modulation
 #include "modulator_qam.hpp"   // Quadrature amplitude modulation based subcarrier modulation
- 
+#include "stream_hello.hpp"    // Hello world stream
