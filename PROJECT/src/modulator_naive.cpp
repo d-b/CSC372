@@ -16,6 +16,11 @@ namespace modem
     }
     
     modulator::response modulator_naive::demodulate(std::vector<byte>& output, const spectrum& input) {
-        return MODULATOR_DemodulationError;
+        std::cout << "Spectrum (" << input.components << "):" << std::endl;
+        for(int i = 0; i < input.components; i++) {
+            double mag = abs(input[0][i]);
+            if(mag > 0.25)
+                std::cout << "X[" << i << "]: " << mag << std::endl;
+        } return MODULATOR_DemodulationError;
     }
 }

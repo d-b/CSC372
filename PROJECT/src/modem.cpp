@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
     modem::ofdm::parameters_t parameters = {
         48000, /* rate                */
         1024,  /* points              */
-        4,     /* symbols             */
+        64,    /* symbols             */
         5000,  /* carrier             */
         1000,  /* bandwidth           */
         0.75,  /* threshold           */
