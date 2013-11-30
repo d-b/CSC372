@@ -66,7 +66,8 @@ namespace modem
 
     
     void ofdm::sender_tick(double deltatime) {
-    }    
+
+    }
 
     bool ofdm::frame_test(const signal& sig) {
         // Symbol size
@@ -105,6 +106,9 @@ namespace modem
     }
 
     void ofdm::receiver_process(const signal& frame) {
+        // Convert the signal from passband down to baseband
+        frame.downconvert(parameters.carrier, parameters.bandwidth);
+
         // Compute the spectrum and perform subcarrier demodulation
         std::vector<byte> payload;
         spectrum spec(frame, parameters.points);
@@ -156,7 +160,7 @@ namespace modem
                 // Test frame for signal
                 if(frame_test(receiver_frame)) {
                     // Perform training operation
-
+                    receiver_training();
                     // Remove preamble from frame
                     size_t samples = parameters.preamble_length * training_short[0].size();
                     samples = std::min(receiver_frame[0].size(), samples);

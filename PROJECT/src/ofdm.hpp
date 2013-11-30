@@ -105,7 +105,7 @@ namespace modem
         bool frame_test(const signal& sig);
 
         // Main loop
-        void receiver_process(const signal& frame);
+        void receiver_process(signal& frame);
         void receiver_training(void);
         void receiver_goto(rstate state);
         void receiver_tick(double deltatime);
