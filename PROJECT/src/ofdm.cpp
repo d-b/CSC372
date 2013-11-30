@@ -35,6 +35,10 @@ namespace modem
         receiver_goto(RSTATE_WaitingForSignal);
     }
 
+    //
+    // Sender
+    //
+
     void ofdm::initialize_symbols(void) {
         // Setup short training symbol
         spectrum& spec = training_short_spectrum;
@@ -68,6 +72,10 @@ namespace modem
     void ofdm::sender_tick(double deltatime) {
 
     }
+
+    //
+    // Receiver
+    //
 
     bool ofdm::frame_test(const signal& sig) {
         // Symbol size
@@ -105,7 +113,7 @@ namespace modem
         return false;
     }
 
-    void ofdm::receiver_process(const signal& frame) {
+    void ofdm::receiver_process(signal& frame) {
         // Convert the signal from passband down to baseband
         frame.downconvert(parameters.carrier, parameters.bandwidth);
 
