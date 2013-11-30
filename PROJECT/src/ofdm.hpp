@@ -93,10 +93,8 @@ namespace modem
         // Receiver
         //
 
-        enum rstate {
-            RSTATE_WaitingForSignal,
-            RSTATE_WaitingForFrame,
-        };
+        enum rstate { RSTATE_WaitingForSignal, RSTATE_WaitingForFrame };
+        enum ftest  { FRAME_Okay, FRAME_NeedMore, FRAME_NotFound };
 
         rstate receiver_state;
         signal receiver_frame;
@@ -104,7 +102,7 @@ namespace modem
         size_t receiver_frame_errors;
 
         // Frame detection
-        bool frame_test(const signal& sig);
+        int frame_test(const signal& sig);
 
         // Main loop
         void receiver_process(signal& frame);

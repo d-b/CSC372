@@ -10,7 +10,9 @@
 namespace modem
 {
     modulator::response modulator_naive::modulate(const std::vector<byte>& input, spectrum& output) {
-        return MODULATOR_NeedMore;
+        output[0][1   ] = 4.0;
+        output[0][1023] = 4.0;
+        return MODULATOR_Okay;
     }
     
     modulator::response modulator_naive::demodulate(std::vector<byte>& output, const spectrum& input) {

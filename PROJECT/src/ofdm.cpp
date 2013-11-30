@@ -22,7 +22,8 @@ namespace modem
         equalization_freqresponse(1, parameters.rate, parameters.points),
         training_short(1, parameters.rate),
         training_short_spectrum(1, parameters.rate, TRAINING_SHORT_POINTS),
-        receiver_frame(1, parameters.rate)
+        receiver_frame(1, parameters.rate),
+        sender_frame_count(0)
     {
         // Initialize internals
         ext.med  = physical_medium;
@@ -45,9 +46,9 @@ namespace modem
         spec[0][2       + 4*0] = std::complex<double>(-1,  1);
         spec[0][2       + 4*1] = std::complex<double>( 1, -1);
         spec[0][2       + 4*2] = std::complex<double>( 1, -1);
-        spec[0][len - 2 - 4*2] = std::complex<double>( 1,  1);
-        spec[0][len - 2 - 4*1] = std::complex<double>( 1,  1);
-        spec[0][len - 2 - 4*0] = std::complex<double>(-1, -1);
+        spec[0][len - 3 - 4*2] = std::complex<double>( 1,  1);
+        spec[0][len - 3 - 4*1] = std::complex<double>( 1,  1);
+        spec[0][len - 3 - 4*0] = std::complex<double>(-1, -1);
         // Synthesize the signal
         training_short = spec;
         training_short[0].erase(training_short[0].begin() + len/2, training_short[0].end());
@@ -100,13 +101,13 @@ namespace modem
     // Receiver
     //
 
-    bool ofdm::frame_test(const signal& sig) {
+    int ofdm::frame_test(const signal& sig) {
         // Symbol size
         size_t symsize = training_short[0].size();
 
         // See if our signal is long enough to contain the training sequence
         if(sig[0].size() < parameters.preamble_length * symsize)
-            return false;
+            return FRAME_NeedMore;
 
         // Perform correlation tests
         size_t len = parameters.preamble_length;
@@ -128,12 +129,12 @@ namespace modem
                 // Test 2: Test correlation between symbol and expected training symbol
                 correlation = abs(spec1.correlation(training_short_spectrum));
                 if(correlation > parameters.threshold)
-                    return true;
+                    return FRAME_Okay;
             }
         }
 
         // No correlation found
-        return false;
+        return FRAME_NotFound;
     }
 
     void ofdm::receiver_process(signal& frame) {
@@ -180,13 +181,16 @@ namespace modem
         // Read data from medium
         signal sig(1, parameters.rate);
         ext.med->input(sig);
+        if(sig[0].empty()) return;
         receiver_frame += sig;
 
         switch(receiver_state) {
             // Signal acquisition phase
             case RSTATE_WaitingForSignal: {
                 // Test frame for signal
-                if(frame_test(receiver_frame)) {
+                int result = frame_test(receiver_frame);
+                // If a frame was found
+                if(result == FRAME_Okay) {
                     // Perform training operation
                     receiver_training();
                     // Remove preamble from frame
@@ -195,7 +199,8 @@ namespace modem
                     receiver_frame[0].erase(receiver_frame[0].begin(), receiver_frame[0].begin() + samples);
                     // Start waiting for OFDM frames
                     receiver_goto(RSTATE_WaitingForFrame);
-                }
+                } else if(result == FRAME_NotFound)
+                    receiver_frame.clear();
             }; break;
 
             // Frame processing phase
