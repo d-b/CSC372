@@ -60,6 +60,7 @@ namespace modem
         void lowpass(double cutoff);
         void upconvert(double frequency);
         void downconvert(double frequency, double bandwidth);
+        void clear(void);
 
         // Data access
         size_t samples() const;
@@ -73,6 +74,7 @@ namespace modem
         // Signal concatenation
         signal operator+(const signal& other) const;
         signal operator*(uint32_t repetitions) const;
+        signal& operator+=(const signal& other);
     };
 
     class window : public signal {

@@ -93,19 +93,19 @@ namespace modem
         // No correlation found
         return false;
     }
+    
+    void ofdm::tick_sender(double deltatime) {
+    }
+
+    void ofdm::tick_receiver(double deltatime) {
+        // Receive data from medium
+        signal sig(1, parameters.rate);
+        ext.med->input(sig);
+        frame += sig;
+    }
 
     void ofdm::tick(double deltatime) {
-        // Read signal and test it
-        static signal buff(1, 48000);
-        signal sig1(1, parameters.rate);
-        ext.med->input(sig1);
-        buff = buff + sig1;
-        if(frame_test(buff))
-            std::cout << "SIGNAL DETECTED!" << std::endl;
-        if(buff[0].size() > parameters.preamble_length * training_short[0].size())
-            buff = signal(1, 48000);
-
-        // Write training signal to speaker
-        ext.med->output(training_short*100);
+        tick_receiver(deltatime); // Receiver update
+        tick_sender  (deltatime); // Sender update
     }
 }

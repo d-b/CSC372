@@ -135,8 +135,8 @@ namespace modem
         lowpass(bandwidth/2);
     }
 
-    void clear(void) {
-        std::for_each(data.begin(), data.end(), [](channel& chan){chan.clear()});
+    void signal::clear(void) {
+        std::for_each(data.begin(), data.end(), [](channel& chan){chan.clear();});
     }
 
     size_t signal::samples() const {
@@ -184,6 +184,15 @@ namespace modem
             for(int j = 0; j < repetitions; j++)
                 result[i].insert(result[i].end(), (*this)[i].begin(), (*this)[i].end());
         } return result;
+    }
+
+    signal& signal::operator+=(const signal& other) {
+        // Sanity checks on other signal
+        assert(rate == other.rate);
+        assert(channels == other.channels);
+        for(int i = 0; i < channels; i++)
+            data[i].insert(data[i].end(), other[i].begin(), other[i].end());
+        return *this;
     }
 
     //
