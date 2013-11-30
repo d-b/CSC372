@@ -17,7 +17,7 @@ namespace modem
 
     void fft::init(void) {}
 
-    void fft::prepare(uint16_t points, bool forwards) {
+    fft::plan& fft::prepare(uint16_t points, bool forwards) {
         std::tuple<uint16_t, bool> params(points, forwards);
         auto iter = plans.find(params);
         if(iter == plans.end()) {
@@ -30,23 +30,22 @@ namespace modem
             }; plan.plan = fftw_plan_dft_1d(
                 points, plan.input, plan.output, forwards ? FFTW_FORWARD : FFTW_BACKWARD, FFTW_MEASURE);
             plans[params] = plan;
-        }
+            return plans[params];
+        } return iter->second;
     }
 
     void fft::forwards(const channel& input, channel& output, uint16_t points) {
-        prepare(points, true);
-        plan &p = plans[std::tuple<uint16_t, bool>(points, true)];
+        plan &p = prepare(points, true);
         memcpy(p.input, input.data(), sizeof(fftw_complex)*points);
         fftw_execute(p.plan);
         memcpy(output.data(), p.output, sizeof(fftw_complex)*points);
     }
     
     void fft::inverse(const channel& input, channel& output, uint16_t points) {
-        prepare(points, false);
-        plan &p = plans[std::tuple<uint16_t, bool>(points, false)];
+        plan &p = prepare(points, false);
         memcpy(p.input, input.data(), sizeof(fftw_complex)*points);
         fftw_execute(p.plan);
-        memcpy(output.data(), p.output, sizeof(fftw_complex)*points);        
+        memcpy(output.data(), p.output, sizeof(fftw_complex)*points);
     }
 
     void fft::exit() {

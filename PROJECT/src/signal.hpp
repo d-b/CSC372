@@ -28,7 +28,7 @@ namespace modem
         };
 
         static std::unordered_map<std::tuple<uint16_t, bool>, plan> plans;
-        static void prepare(uint16_t points, bool forwards);
+        static plan& prepare(uint16_t points, bool forwards);
 
     public:
         // Static initialization and shutdown

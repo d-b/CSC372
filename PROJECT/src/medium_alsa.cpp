@@ -17,7 +17,7 @@ namespace modem
         std::stringstream ss;
         ss << "ALSA exception in " << file << " @ line " << line << ": " << message;
         return ss.str().c_str();
-    }    
+    }
 
     medium_alsa::medium_alsa(const char* device_input, const char* device_output, uint16_t rate, size_t buffer_size, size_t period_size)
         : rate(rate), buffer_size(buffer_size), period_size(period_size)
@@ -168,7 +168,7 @@ namespace modem
                 if(fd->events & POLLOUT) FD_SET(fd->fd, write_fds);
                 if(fd->events & (POLLIN | POLLOUT))
                     if(fd->fd > *max) *max = fd->fd;
-            } 
+            }
     }
 
     int medium_alsa::wait(timeval* timeout){
@@ -190,7 +190,6 @@ namespace modem
     }    
 
     medium::response medium_alsa::output(const signal& sig) {
-        if(!buffer_output.empty()) return MEDIUM_Error;
         buffer_output.insert(buffer_output.end(), sig[0].begin(), sig[0].end());
         return MEDIUM_Okay;
     }
@@ -207,7 +206,7 @@ namespace modem
             std::stringstream error; int res;
             if((res = snd_pcm_recover(handle_input, frames, 1)) < 0) {
                 error << "cannot recover from input error (" << snd_strerror(res) << ")";
-                throwx(alsa_exception(error.str()));                
+                throwx(alsa_exception(error.str()));
             }
         }
 
@@ -223,7 +222,7 @@ namespace modem
                 std::stringstream error; int res;
                 if((res = snd_pcm_recover(handle_output, frames, 1)) < 0) {
                     error << "cannot recover from output error (" << snd_strerror(res) << ")";
-                    throwx(alsa_exception(error.str()));                
+                    throwx(alsa_exception(error.str()));
                 }
             }
         }
