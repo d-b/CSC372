@@ -80,11 +80,19 @@ namespace modem
         // Send data to the modulator
         spectrum spec(1, parameters.rate, parameters.points);
         if(ext.mod->modulate(data, spec) == modulator::MODULATOR_Okay) {
-            // Synthesize the signal and convert it up to passband
+            // Synthesize the signal and insert the cyclic prefix
             signal frame(spec);
+            insert_cyclicprefix(frame);
+            // Convert the signal up to passband
             frame.upconvert(parameters.carrier);
+            // See if we need to add a preamble
+            if(sender_frame_count % parameters.symbols == 0) {
+                insert_preamble(frame);
+                sender_frame_count = 0;
+            }
             // Pass the frame on to the medium
             ext.med->output(frame);
+            sender_frame_count += 1;
         }
     }
 
@@ -129,9 +137,6 @@ namespace modem
     }
 
     void ofdm::receiver_process(signal& frame) {
-        // Convert the signal from passband down to baseband
-        frame.downconvert(parameters.carrier, parameters.bandwidth);
-
         // Compute the spectrum and perform subcarrier demodulation
         std::vector<byte> payload;
         spectrum spec(frame, parameters.points);
@@ -196,13 +201,18 @@ namespace modem
             // Frame processing phase
             case RSTATE_WaitingForFrame: {
                 // See if we have a complete frame
-                size_t frame_size = parameters.points;
+                size_t frame_size = parameters.points + parameters.cyclicprefix_length;
                 if(receiver_frame[0].size() >= frame_size) {
-                    // Process the frame
+                    // Convert the signal from passband down to baseband
                     signal frame(1, parameters.rate);
                     frame[0].insert(frame[0].begin(), receiver_frame[0].begin(), receiver_frame[0].begin() + frame_size);
                     receiver_frame[0].erase(receiver_frame[0].begin(), receiver_frame[0].begin() + frame_size);
-                    receiver_process(frame); receiver_frame_count += 1;
+                    frame.downconvert(parameters.carrier, parameters.bandwidth);
+                    // Remove the cyclic prefix
+                    frame[0].erase(frame[0].begin(), frame[0].begin() + parameters.cyclicprefix_length);
+                    // Process the frame
+                    receiver_process(frame);
+                    receiver_frame_count += 1;
                     // See if we need to switch back to the signal acquisition state
                     if(receiver_frame_count >= parameters.symbols)
                         receiver_goto(RSTATE_WaitingForSignal);

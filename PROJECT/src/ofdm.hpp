@@ -80,6 +80,8 @@ namespace modem
         // Sender
         //
 
+        size_t sender_frame_count;
+
         // Synchronization and interference mitigation mechanisms
         void insert_preamble(signal& sig);
         void insert_cyclicprefix(signal& sig);
