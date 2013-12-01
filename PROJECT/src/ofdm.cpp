@@ -121,37 +121,37 @@ namespace modem
     // Receiver
     //
 
-    int ofdm::frame_test(const signal& sig) {
-        // Symbol size
-        size_t symsize = training_short[0].size();
+    int ofdm::frame_test(void) {
+        // Fetch sizes
+        size_t symbol_size = training_short[0].size();
+        size_t preamble_size = size_preamble();
 
         // See if our signal is long enough to contain the training sequence
-        if(sig[0].size() < size_preamble())
+        if(receiver_frame[0].size() < preamble_size)
             return FRAME_NeedMore;
 
-        // Perform correlation tests
-        size_t len = parameters.preamble_length;
-        for(int i = 0; i < len/2; i++) {
-            // First and second
-            signal symbol1(1, parameters.rate), symbol2(1, parameters.rate);
-            symbol1[0].insert(symbol1[0].begin(), sig[0].begin() + (i + 0)       * symsize,
-                                                  sig[0].end()   + (i + 1)       * symsize);
-            symbol2[0].insert(symbol2[0].begin(), sig[0].begin() + (len - i - 1) * symsize,
-                                                  sig[0].end()   + (len - i - 0) * symsize);
-            
-            // Compute correlation
-            spectrum spec1(symbol1, TRAINING_SHORT_POINTS);
-            spectrum spec2(symbol2, TRAINING_SHORT_POINTS);
-            double correlation = abs(spec1.correlation(spec2));
+        // Compute repeats required for training symbol
+        size_t repeats = (TRAINING_SHORT_POINTS + symbol_size - 1)/symbol_size;
 
-            // Test 1: Check correlation between symbols
+        // Perform correlation tests
+        for(int i = 0; i < parameters.preamble_length; i++) {
+            signal symbol(1, parameters.rate);
+            symbol[0].insert(symbol[0].begin(), receiver_frame[0].begin() + symbol_size * (i + 0),
+                                                receiver_frame[0].begin() + symbol_size * (i + 1));
+            spectrum spec(symbol*repeats, TRAINING_SHORT_POINTS);
+            double correlation = abs(spec.correlation(training_short_spectrum));
             if(correlation > parameters.threshold) {
-                // Test 2: Test correlation between symbol and expected training symbol
-                correlation = abs(spec1.correlation(training_short_spectrum));
-                if(correlation > parameters.threshold)
-                    return FRAME_Okay;
+                if(i > 0) {
+                    receiver_frame[0].erase(receiver_frame[0].begin(), receiver_frame[0].begin() + symbol_size * (i + 0));
+                    return FRAME_NeedMore;
+                }
+                // Appropriate frame found
+                else return FRAME_Okay;
             }
         }
+
+        // Remove preamble from frame
+        receiver_frame[0].erase(receiver_frame[0].begin(), receiver_frame[0].begin() + preamble_size);
 
         // No correlation found
         return FRAME_NotFound;
@@ -207,20 +207,17 @@ namespace modem
         switch(receiver_state) {
             // Signal acquisition phase
             case RSTATE_WaitingForSignal: {
-                // Test frame for signal
-                int result = frame_test(receiver_frame);
                 // If a frame was found
-                if(result == FRAME_Okay) {
+                if(frame_test() == FRAME_Okay) {
                     // Perform training operation
                     receiver_training();
                     // Remove preamble from frame
-                    size_t samples = parameters.preamble_length * training_short[0].size();
+                    size_t samples = size_preamble();
                     samples = std::min(receiver_frame[0].size(), samples);
-                    receiver_frame[0].erase(receiver_frame[0].begin(), receiver_frame[0].begin() + samples);
+                    receiver_frame[0].erase(receiver_frame[0].begin(), receiver_frame[0].begin() + samples);                    
                     // Start waiting for OFDM frames
                     receiver_goto(RSTATE_WaitingForFrame);
-                } else if(result == FRAME_NotFound)
-                    receiver_frame.clear();
+                }
             }; break;
 
             // Frame processing phase

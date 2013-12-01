@@ -105,7 +105,7 @@ namespace modem
         size_t receiver_frame_errors;
 
         // Frame detection
-        int frame_test(const signal& sig);
+        int frame_test(void);
 
         // Main loop
         void receiver_process(signal& frame);
