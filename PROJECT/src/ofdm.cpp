@@ -36,9 +36,9 @@ namespace modem
     }
 
     //
-    // Sender
+    // Common
     //
-
+    
     void ofdm::initialize_symbols(void) {
         // Setup short training symbol
         spectrum& spec = training_short_spectrum;
@@ -56,7 +56,19 @@ namespace modem
         // Preamble length must be even
         if(parameters.preamble_length % 2)
             parameters.preamble_length += 1;
+    }    
+
+    size_t ofdm::size_preamble(void) {
+        return training_short[0].size() * parameters.preamble_length;
     }
+
+    size_t ofdm::size_cyclicprefix(void) {
+        return parameters.cyclicprefix_length;
+    }
+
+    //
+    // Sender
+    //
     
     void ofdm::insert_preamble(signal& sig) {
         sig = training_short * parameters.preamble_length + sig;
@@ -71,12 +83,20 @@ namespace modem
     
     void ofdm::sender_tick(double deltatime) {
         // If medium is not currently in handling output bail out
-        if(!(ext.med->mode() | medium::DUPLEX_Output)) return;
+        if(!(ext.med->mode() & medium::DUPLEX_Output)) return;
+
+        // See if we need to insert a preamble
+        bool need_preamble = sender_frame_count % parameters.symbols == 0;
+
+        // Compute size of data
+        size_t size = parameters.points + parameters.cyclicprefix_length;
+        if(need_preamble) size += size_preamble();
+        if(ext.med->free() < size) return;
 
         // Fetch data from the stream
         std::vector<byte> data;
-        stream::response sres = ext.strm->outgoing(data);
-        if(sres != stream::STREAM_Okay || data.empty()) return;
+        stream::response res = ext.strm->outgoing(data);
+        if(res != stream::STREAM_Okay || data.empty()) return;
 
         // Send data to the modulator
         spectrum spec(1, parameters.rate, parameters.points);
@@ -86,8 +106,8 @@ namespace modem
             insert_cyclicprefix(frame);
             // Convert the signal up to passband
             frame.upconvert(parameters.carrier);
-            // See if we need to add a preamble
-            if(sender_frame_count % parameters.symbols == 0) {
+            // Insert a preamble if required
+            if(need_preamble) {
                 insert_preamble(frame);
                 sender_frame_count = 0;
             }
@@ -106,7 +126,7 @@ namespace modem
         size_t symsize = training_short[0].size();
 
         // See if our signal is long enough to contain the training sequence
-        if(sig[0].size() < parameters.preamble_length * symsize)
+        if(sig[0].size() < size_preamble())
             return FRAME_NeedMore;
 
         // Perform correlation tests
@@ -174,7 +194,7 @@ namespace modem
 
     void ofdm::receiver_tick(double deltatime) {
         // If medium is not currently in handling input reset receiver state and bail out
-        if(!(ext.med->mode() | medium::DUPLEX_Input)) {
+        if(!(ext.med->mode() & medium::DUPLEX_Input)) {
             receiver_goto(RSTATE_WaitingForSignal); return;
         }
 

@@ -14,9 +14,10 @@ namespace modem
 
     class medium {
     public:
-        enum duplex   { DUPLEX_Input = 1, DUPLEX_Output = 2, DUPLEX_Full = (DUPLEX_Input | DUPLEX_Output) };
-        enum response { MEDIUM_Okay, MEDIUM_Error };
+        enum duplex   { DUPLEX_None = 0, DUPLEX_Input = 1, DUPLEX_Output = 2, DUPLEX_Full = (DUPLEX_Input | DUPLEX_Output) };
+        enum response { MEDIUM_Okay, MEDIUM_Again, MEDIUM_Error };
         virtual duplex   mode(void)                = 0;
+        virtual size_t   free(void)                = 0;
         virtual response input(signal& sig)        = 0;
         virtual response output(const signal& sig) = 0;
     };
@@ -75,6 +76,8 @@ namespace modem
 
         // Training symbol initialization
         void initialize_symbols(void);
+        size_t size_preamble(void);
+        size_t size_cyclicprefix(void);
 
         //
         // Sender

@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
     // Setup OFDM instance
     modem::stream_hello strm;
     modem::modulator_naive mod;
-    modem::medium_alsa med("default", "default", parameters.rate, parameters.points, 64);
+    modem::medium_alsa med("default", "default", parameters.rate, 4096, 64, modem::medium::DUPLEX_Output);
     modem::ofdm ofdm(parameters, &med, &mod, &strm);
     
     // Main loop

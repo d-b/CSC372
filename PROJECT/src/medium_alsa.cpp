@@ -19,12 +19,12 @@ namespace modem
         return ss.str().c_str();
     }
 
-    medium_alsa::medium_alsa(const char* device_input, const char* device_output, uint16_t rate, size_t buffer_size, size_t period_size)
-        : rate(rate), buffer_size(buffer_size), period_size(period_size)
+    medium_alsa::medium_alsa(const char* device_input, const char* device_output, uint16_t rate, size_t buffer_size, size_t period_size, duplex io_mode)
+        : rate(rate), buffer_size(buffer_size), period_size(period_size), io_mode(io_mode)
     {
         buffer.resize(buffer_size);
-        initialize_device(&handle_input, device_input, SND_PCM_STREAM_CAPTURE);
-        initialize_device(&handle_output, device_input, SND_PCM_STREAM_PLAYBACK);
+        if(io_mode & DUPLEX_Input ) initialize_device(&handle_input,  device_input,  SND_PCM_STREAM_CAPTURE );
+        if(io_mode & DUPLEX_Output) initialize_device(&handle_output, device_output, SND_PCM_STREAM_PLAYBACK);
         initialize_polling();
     }
 
@@ -117,16 +117,16 @@ namespace modem
         }
 
         //
-        // Start interface
+        // Setup interface
         //
 
         if((res = snd_pcm_prepare(*handle)) < 0) {
-           error << "cannot prepare audio interface for use (" << snd_strerror(res) << ")";
-           throwx(alsa_exception(error.str()));
+            error << "cannot prepare audio interface for use (" << snd_strerror(res) << ")";
+            throwx(alsa_exception(error.str()));
         }
 
-        if((res = snd_pcm_prepare(*handle)) < 0) {
-           error << "cannot start interface (" << snd_strerror(res) << ")";
+        if((res = snd_pcm_start(*handle)) < 0) {
+            error << "cannot stop interface (" << snd_strerror(res) << ")";
             throwx(alsa_exception(error.str()));
         }
     }
@@ -137,18 +137,21 @@ namespace modem
         size_t size;
         std::stringstream error; int res;
 
-        // Resize FD arrays
-        ufds_input.resize(snd_pcm_poll_descriptors_count(handle_input));
-        ufds_output.resize(snd_pcm_poll_descriptors_count(handle_output));
-
-        // Setup device descriptors array
-        if((res = snd_pcm_poll_descriptors(handle_input, ufds_input.data(), ufds_input.size())) < 0) {
-            error << "cannot acquire polling descriptors (" << snd_strerror(res) << ")";
-            throwx(alsa_exception(error.str()));
+        // Setup input device descriptors
+        if(mode() & DUPLEX_Input) {
+            ufds_input.resize(snd_pcm_poll_descriptors_count(handle_input));
+            if((res = snd_pcm_poll_descriptors(handle_input, ufds_input.data(), ufds_input.size())) < 0) {
+                error << "cannot acquire polling descriptors (" << snd_strerror(res) << ")";
+                throwx(alsa_exception(error.str()));
+            }
         }
-        if((res = snd_pcm_poll_descriptors(handle_output, ufds_output.data(), ufds_output.size())) < 0) {
-            error << "cannot acquire polling descriptors (" << snd_strerror(res) << ")";
-            throwx(alsa_exception(error.str()));
+        // Setup output device descriptors
+        else if(mode() & DUPLEX_Output) {
+            ufds_output.resize(snd_pcm_poll_descriptors_count(handle_output));
+            if((res = snd_pcm_poll_descriptors(handle_output, ufds_output.data(), ufds_output.size())) < 0) {
+                error << "cannot acquire polling descriptors (" << snd_strerror(res) << ")";
+                throwx(alsa_exception(error.str()));
+            }
         }
     }
 
@@ -184,26 +187,33 @@ namespace modem
     }
 
     medium::duplex medium_alsa::mode(void) {
-        return DUPLEX_Full;
+        return io_mode;
+    }
+
+    size_t medium_alsa::free() {
+        return buffer_size - buffer_output.size();
     }
 
     medium::response medium_alsa::input(signal& sig) {
         sig[0].insert(sig[0].end(), buffer_input.begin(), buffer_input.end());
         buffer_input.clear();
         return MEDIUM_Okay;
-    }    
+    }
 
     medium::response medium_alsa::output(const signal& sig) {
+        if(buffer_output.size() + sig[0].size() > buffer_size) return MEDIUM_Again;
         buffer_output.insert(buffer_output.end(), sig[0].begin(), sig[0].end());
         return MEDIUM_Okay;
     }
 
-    void medium_alsa::tick(double deltatime) {
-        // Sound frames
+    void medium_alsa::frames_read(void) {
+        // Frames read
         snd_pcm_sframes_t frames = 0;
 
-        // Try to read frames
+        // Resize buffer to fit data
         buffer.resize(buffer_size);
+
+        // Read frames from device
         if((frames = snd_pcm_readi(handle_input, buffer.data(), buffer.size())) > 0)
             buffer_input.insert(buffer_input.end(), buffer.begin(), buffer.begin() + frames);
         else if(frames != -EAGAIN) {
@@ -212,14 +222,25 @@ namespace modem
                 error << "cannot recover from input error (" << snd_strerror(res) << ")";
                 throwx(alsa_exception(error.str()));
             }
-        }
+        }        
+    }
+    
+    void medium_alsa::frames_write(void) {
+        // Frames written
+        snd_pcm_sframes_t frames = 0;
 
-        // Try to write frames
-        size_t size = std::min((size_t) buffer_size, buffer_output.size()); if(size > 0) {
+        for(;;) {
+            // Fetch chunk size
+            size_t size = std::min((size_t) buffer_size, buffer_output.size());
+            if(size <= 0) break;
+
+            // Add chunk to buffer            
             buffer.clear(); std::for_each(buffer_output.begin(), buffer_output.begin() + size,
                 [this](const std::complex<double>& val){
                     this->buffer.push_back(real(val));
                 });
+
+            // Write frames to device
             if((frames = snd_pcm_writei(handle_output, buffer.data(), size)) > 0)
                 buffer_output.erase(buffer_output.begin(), buffer_output.begin() + frames);
             else if(frames != -EAGAIN) {
@@ -229,6 +250,12 @@ namespace modem
                     throwx(alsa_exception(error.str()));
                 }
             }
+            else break;
         }
+    }
+
+    void medium_alsa::tick(double deltatime) {
+        if(mode() & DUPLEX_Input ) frames_read();
+        if(mode() & DUPLEX_Output) frames_write(); 
     }
 }
