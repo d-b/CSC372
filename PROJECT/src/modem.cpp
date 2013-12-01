@@ -12,7 +12,7 @@ void usage(const char* application) {
               << "Daniel Bloemendal <d.bloemendal@gmail.com>" << std::endl
               << "David Lu <david-lu@hotmail.com>" << std::endl
               << "Usage: " << application
-              << " [-i input mode] [-o output mode]" << std::endl;
+              << " [-i input mode] [-o <output text>]" << std::endl;
 }
 
 int main(int argc, char* argv[]) {
@@ -20,12 +20,12 @@ int main(int argc, char* argv[]) {
     modem::ofdm::parameters_t parameters = {
         48000, /* rate                */
         1024,  /* points              */
-        128,   /* symbols             */
+        128 ,  /* symbols             */
         5000,  /* carrier             */
-        9000,  /* bandwidth           */
-        0.75,  /* threshold           */
+        12000, /* bandwidth           */
+        0.5,   /* threshold           */
     
-        10,    /* preamble_length     */
+        20,    /* preamble_length     */
         128,   /* cyclicprefix_length */
     };
 
@@ -35,13 +35,15 @@ int main(int argc, char* argv[]) {
         0, /* tv_usec */
     };
 
+    // Text to send
+    std::string payload;
 
     // I/O mode
     int io_mode = modem::medium::DUPLEX_None;
 
     // Process arguments
     int option;
-    while ((option = getopt (argc, argv, "io")) != -1)
+    while ((option = getopt (argc, argv, "io:")) != -1)
         switch (option) {
             case 'i':
             io_mode |= modem::medium::DUPLEX_Input;
@@ -49,6 +51,7 @@ int main(int argc, char* argv[]) {
 
             case 'o':
             io_mode |= modem::medium::DUPLEX_Output;
+            payload = optarg;
             break;
 
             default:
@@ -66,7 +69,7 @@ int main(int argc, char* argv[]) {
 
 
     // Setup OFDM instance
-    modem::stream_hello strm;
+    modem::stream_text strm(payload);
     modem::modulator_naive mod;
     modem::medium_alsa med("default", "default", parameters.rate, 4096, 64, static_cast<modem::medium::duplex>(io_mode));
     modem::ofdm ofdm(parameters, &med, &mod, &strm);

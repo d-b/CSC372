@@ -12,7 +12,7 @@ namespace modem
     modulator::response modulator_naive::modulate(const std::vector<byte>& input, spectrum& output) {
         static std::vector<byte> data;
         if(data.size() <= 1024)
-            data.insert(data.begin(), input.begin(), input.end());
+            data.insert(data.end(), input.begin(), input.end());
         if(!data.empty()) {
             output[0][data[0]] = 10.0;
             data.erase(data.begin());
@@ -24,8 +24,7 @@ namespace modem
         normalized /= normalized.abs();
         for(int i = 0; i < normalized.components; i++) {
             double mag = abs(normalized[0][i]);
-            if(mag > 0.5)
-                std::cout << (char) i << std::flush;
-        } return MODULATOR_DemodulationError;
+            if(mag > 0.25 && i < 128) output.push_back(i);
+        } return MODULATOR_Okay;
     }
 }

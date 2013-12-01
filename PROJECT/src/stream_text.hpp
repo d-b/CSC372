@@ -9,7 +9,11 @@
 
 namespace modem
 {
-    class stream_hello : public stream {
+    class stream_text : public stream {
+        std::string text;
+
+    public:
+        stream_text(std::string text);
         response incomming(const std::vector<byte>& data);
         response outgoing(std::vector<byte>& data);
     };
