@@ -110,7 +110,7 @@ namespace modem
         uint16_t nyquist = rate/2;
         double   width   = (double)nyquist/n;
         frequency        = width * ceil(frequency/width);
-        // Perform frequency shift and return real value result
+        // Perform upwards frequency shift and store real value result
         double period = (nyquist/frequency)*2.0;
         for(int i = 0; i < channels; i++) {
             for(int j = 0; j < size; j++) {
@@ -127,7 +127,7 @@ namespace modem
         uint16_t nyquist = rate/2;
         double   width   = (double)nyquist/n;
         frequency        = width * ceil(frequency/width);
-        // Perform frequency shift and return real value result
+        // Perform downwards frequency shift and apply low pass filter
         double period = (nyquist/frequency)*2.0;
         for(int i = 0; i < channels; i++)
             for(int j = 0; j < size; j++)
