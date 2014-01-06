@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
         128 ,  /* symbols             */
         5000,  /* carrier             */
         12000, /* bandwidth           */
-        0.5,   /* threshold           */
+        0.90,  /* threshold           */
     
         20,    /* preamble_length     */
         128,   /* cyclicprefix_length */
