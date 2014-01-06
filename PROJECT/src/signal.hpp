@@ -44,6 +44,9 @@ namespace modem
         std::vector<channel> data;
 
     public:
+        // Invalid sample position
+        enum invalid {npos = (size_t) -1};
+
         // Signal parameters
         const uint16_t channels;
         const uint32_t rate;
@@ -58,16 +61,24 @@ namespace modem
 
         // Signal manipulation
         void lowpass(double cutoff);
-        void upconvert(double frequency);
-        void downconvert(double frequency, double bandwidth);
+        void upconvert(double frequency, uint16_t points);
+        void downconvert(double frequency, double bandwidth, uint16_t points);
         void clear(void);
+
+        // Signal analysis
+        size_t find(const signal& sig, double threshold) const;
 
         // Data access
         size_t samples() const;
         channel& operator[] (uint16_t channel);
         const channel& operator[] (uint16_t channel) const;
+        signal slice(size_t start, size_t end) const;
 
         // Mathematical operations
+        std::complex<double> abs(void) const;
+        std::complex<double> dot(const signal& other) const;
+        std::complex<double> operator^(const signal& other) const;
+        std::complex<double> correlation(const signal& other) const;
         signal& operator*=(std::complex<double> value);
         signal& operator/=(std::complex<double> value);
 

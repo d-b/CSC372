@@ -67,7 +67,6 @@ int main(int argc, char* argv[]) {
         std::cout << "Full duplex mode is not supported!" << std::endl; return -1;
     }
 
-
     // Setup OFDM instance
     modem::stream_text strm(payload);
     modem::modulator_naive mod;

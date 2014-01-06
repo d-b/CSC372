@@ -29,6 +29,7 @@
 #include <iostream>
 #include <sstream>
 #include <algorithm>
+#include <memory>
 
 // Third party includes
 #include <fftw3.h>

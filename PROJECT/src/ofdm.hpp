@@ -96,16 +96,12 @@ namespace modem
         // Receiver
         //
 
-        enum rstate { RSTATE_WaitingForSignal, RSTATE_WaitingForFrame };
-        enum ftest  { FRAME_Okay, FRAME_NeedMore, FRAME_NotFound };
+        enum rstate { RSTATE_WaitingForSignal, RSTATE_WaitingForPreamble, RSTATE_WaitingForFrame };
 
         rstate receiver_state;
         signal receiver_frame;
         size_t receiver_frame_count;
         size_t receiver_frame_errors;
-
-        // Frame detection
-        int frame_test(void);
 
         // Main loop
         void receiver_process(signal& frame);

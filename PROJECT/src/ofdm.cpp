@@ -9,7 +9,7 @@
 
 // Short training symbol parameters
 #define TRAINING_SHORT_POINTS    64
-#define TRAINING_SHORT_AMPLITUDE 4.0
+#define TRAINING_SHORT_AMPLITUDE 0.75
 
 namespace modem
 {
@@ -38,7 +38,7 @@ namespace modem
     //
     // Common
     //
-    
+
     void ofdm::initialize_symbols(void) {
         // Setup short training symbol
         spectrum& spec = training_short_spectrum;
@@ -56,7 +56,7 @@ namespace modem
         // Preamble length must be even
         if(parameters.preamble_length % 2)
             parameters.preamble_length += 1;
-    }    
+    }
 
     size_t ofdm::size_preamble(void) {
         return training_short[0].size() * parameters.preamble_length;
@@ -69,18 +69,17 @@ namespace modem
     //
     // Sender
     //
-    
+
     void ofdm::insert_preamble(signal& sig) {
         sig = training_short * parameters.preamble_length + sig;
     }
-    
+
     void ofdm::insert_cyclicprefix(signal& sig) {
         assert(parameters.cyclicprefix_length <= sig[0].size());
         size_t length = parameters.cyclicprefix_length;
         sig[0].insert(sig[0].begin(), sig[0].end() - length, sig[0].end());
     }
 
-    
     void ofdm::sender_tick(double deltatime) {
         // If medium is not currently in handling output bail out
         if(!(ext.med->mode() & medium::DUPLEX_Output)) return;
@@ -105,7 +104,7 @@ namespace modem
             signal frame(spec);
             insert_cyclicprefix(frame);
             // Convert the signal up to passband
-            frame.upconvert(parameters.carrier);
+            frame.upconvert(parameters.carrier, parameters.points);
             // Insert a preamble if required
             if(need_preamble) {
                 insert_preamble(frame);
@@ -120,42 +119,6 @@ namespace modem
     //
     // Receiver
     //
-
-    int ofdm::frame_test(void) {
-        // Fetch sizes
-        size_t symbol_size = training_short[0].size();
-        size_t preamble_size = size_preamble();
-
-        // See if our signal is long enough to contain the training sequence
-        if(receiver_frame[0].size() < preamble_size)
-            return FRAME_NeedMore;
-
-        // Compute repeats required for training symbol
-        size_t repeats = (TRAINING_SHORT_POINTS + symbol_size - 1)/symbol_size;
-
-        // Perform correlation tests
-        for(int i = 0; i < parameters.preamble_length; i++) {
-            signal symbol(1, parameters.rate);
-            symbol[0].insert(symbol[0].begin(), receiver_frame[0].begin() + symbol_size * (i + 0),
-                                                receiver_frame[0].begin() + symbol_size * (i + 1));
-            spectrum spec(symbol*repeats, TRAINING_SHORT_POINTS);
-            double correlation = abs(spec.correlation(training_short_spectrum));
-            if(correlation > parameters.threshold) {
-                if(i > 0) {
-                    receiver_frame[0].erase(receiver_frame[0].begin(), receiver_frame[0].begin() + symbol_size * (i + 0));
-                    return FRAME_NeedMore;
-                }
-                // Appropriate frame found
-                else return FRAME_Okay;
-            }
-        }
-
-        // Remove preamble from frame
-        receiver_frame[0].erase(receiver_frame[0].begin(), receiver_frame[0].begin() + preamble_size);
-
-        // No correlation found
-        return FRAME_NotFound;
-    }
 
     void ofdm::receiver_process(signal& frame) {
         // Compute the spectrum and perform subcarrier demodulation
@@ -185,6 +148,10 @@ namespace modem
                 receiver_frame_errors = 0;
                 break;
 
+            case RSTATE_WaitingForPreamble:
+                receiver_state = RSTATE_WaitingForPreamble;
+                break;
+
             case RSTATE_WaitingForFrame:
                 receiver_state = RSTATE_WaitingForFrame;
                 receiver_frame_count = 0;
@@ -207,15 +174,29 @@ namespace modem
         switch(receiver_state) {
             // Signal acquisition phase
             case RSTATE_WaitingForSignal: {
-                // If a frame was found
-                if(frame_test() == FRAME_Okay) {
-                    // Perform training operation
-                    receiver_training();
-                    // Remove preamble from frame
-                    size_t samples = size_preamble();
-                    samples = std::min(receiver_frame[0].size(), samples);
-                    receiver_frame[0].erase(receiver_frame[0].begin(), receiver_frame[0].begin() + samples);                    
-                    // Start waiting for OFDM frames
+                // Search for training signal
+                size_t pos = receiver_frame.find(training_short, parameters.threshold);
+                if(pos != modem::signal::npos) {
+                    // Crop frame up to the discovered training symbol
+                    receiver_frame[0].erase(receiver_frame[0].begin(), receiver_frame[0].begin() + pos);
+                    // Wait for full preamble
+                    receiver_goto(RSTATE_WaitingForPreamble);
+                }
+                // If no training signal was found
+                else {
+                    // Remove segment of the frame known not to contain the training symbol
+                    if(receiver_frame.samples() > training_short.samples())
+                        receiver_frame[0].erase(receiver_frame[0].begin(), receiver_frame[0].end() - training_short.samples());
+                }
+            }; break;
+
+            // Preamble processing phase
+            case RSTATE_WaitingForPreamble: {
+                // Check frame size
+                size_t preamble_size = size_preamble();
+                if(receiver_frame.samples() >= preamble_size) {
+                    // Remove the preamble from the signal and progress to frame processing
+                    receiver_frame[0].erase(receiver_frame[0].begin(), receiver_frame[0].begin() + preamble_size);
                     receiver_goto(RSTATE_WaitingForFrame);
                 }
             }; break;
@@ -227,11 +208,10 @@ namespace modem
                 if(receiver_frame[0].size() >= frame_size) {
                     // Convert the signal from passband down to baseband
                     signal frame(1, parameters.rate);
-                    frame[0].insert(frame[0].begin(), receiver_frame[0].begin(), receiver_frame[0].begin() + frame_size);
+                    frame[0].insert(frame[0].begin(), receiver_frame[0].begin() + parameters.cyclicprefix_length, receiver_frame[0].begin() + frame_size);
                     receiver_frame[0].erase(receiver_frame[0].begin(), receiver_frame[0].begin() + frame_size);
-                    frame.downconvert(parameters.carrier, parameters.bandwidth);
-                    // Remove the cyclic prefix
-                    frame[0].erase(frame[0].begin(), frame[0].begin() + parameters.cyclicprefix_length);
+                    frame.downconvert(parameters.carrier, parameters.bandwidth, parameters.points);
+                    
                     // Process the frame
                     receiver_process(frame);
                     receiver_frame_count += 1;

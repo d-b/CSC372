@@ -103,10 +103,10 @@ namespace modem
         *this = spec;
     }
 
-    void signal::upconvert(double frequency) {
+    void signal::upconvert(double frequency, uint16_t points) {
         // Choose nearest frequency bin
         uint16_t size    = samples();
-        uint16_t n       = size/2;
+        uint16_t n       = points/2;
         uint16_t nyquist = rate/2;
         double   width   = (double)nyquist/n;
         frequency        = width * ceil(frequency/width);
@@ -120,10 +120,10 @@ namespace modem
         }
     }
 
-    void signal::downconvert(double frequency, double bandwidth) {
+    void signal::downconvert(double frequency, double bandwidth, uint16_t points) {
         // Choose nearest frequency bin
         uint16_t size    = samples();
-        uint16_t n       = size/2;
+        uint16_t n       = points/2;
         uint16_t nyquist = rate/2;
         double   width   = (double)nyquist/n;
         frequency        = width * ceil(frequency/width);
@@ -139,6 +139,22 @@ namespace modem
         std::for_each(data.begin(), data.end(), [](channel& chan){chan.clear();});
     }
 
+    size_t signal::find(const signal& sig, double threshold) const {
+        // Sanity check signal compatibility
+        assert(channels == sig.channels);
+        // Ensure that the input signal is not larger than this signal
+        if(sig.samples() > samples()) return npos;
+        // Search for the signal
+        size_t n = samples() - sig.samples();
+        for(size_t i = 0; i <= n; i++) {
+            signal window(slice(i, i + sig.samples()));
+            double corr = std::abs(sig.correlation(window));
+            if(corr >= threshold) return i;
+        }
+        // Signal not found
+        return npos;
+    }
+
     size_t signal::samples() const {
         return data[0].size();
     }
@@ -150,13 +166,45 @@ namespace modem
         return data[channel];
     }
 
+    signal signal::slice(size_t start, size_t end) const {
+        assert(start <= end);
+        signal sig(channels, rate);
+        for(int i = 0; i < channels; i++)
+            sig[i].insert(sig[i].end(), data[i].begin() + start, data[i].begin() + end);
+        return sig;
+    }
+
+    std::complex<double> signal::abs(void) const {
+        return sqrt((*this) ^ (*this));
+    }
+
+    std::complex<double> signal::dot(const signal& other) const {
+        assert(channels == other.channels);
+        assert(samples() == other.samples());
+        std::complex<double> result(0, 0);
+        for(int i = 0; i < channels; i++)
+            for(int j = 0; j < samples(); j++)
+                result += data[i][j] * conj(other[i][j]);
+        return result;
+    }
+
+    std::complex<double> signal::operator^(const signal& other) const {
+        return this->dot(other);
+    }
+
+    std::complex<double> signal::correlation(const signal& other) const {
+        signal sig1(*this), sig2(other);
+        sig1 /= sig1.abs(); sig2 /= sig2.abs();
+        return sig1 ^ sig2;
+    }
+
     signal& signal::operator*=(std::complex<double> value) {
         for(int i = 0; i < channels; i++)
             for(int j = 0; j < samples(); j++)
                 data[i][j] *= value;
         return *this;
     }
-    
+
     signal& signal::operator/=(std::complex<double> value) {
         for(int i = 0; i < channels; i++)
             for(int j = 0; j < samples(); j++)

@@ -9,7 +9,7 @@
 
 namespace modem {
     namespace soundfile {
-        int    save(std::string filename, const signal& sig);
-        signal load(std::string filename);
+        int save(std::string filename, const signal& sig);
+        std::shared_ptr<signal> load(std::string filename);
     }
 }

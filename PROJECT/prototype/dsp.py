@@ -27,9 +27,9 @@ def lowpass(signal, cutoff, nyquist):
         spectrum[n + 1] = 0
     return np.fft.ifft(spectrum)
 
-def upconvert(signal, frequency, nyquist):
+def upconvert(signal, frequency, nyquist, points):
     # Choose nearest frequency bin
-    n         = len(signal)//2
+    n         = points//2
     width     = nyquist/n
     frequency = width * np.ceil(frequency/width)
     # Perform frequency shift and return real value result
@@ -37,9 +37,9 @@ def upconvert(signal, frequency, nyquist):
     converted = np.array([signal[i]*np.exp(2j*np.pi*(i/period)) for i, x in enumerate(signal)])
     return np.real(converted)*2.0
 
-def downconvert(signal, frequency, nyquist, bandwidth):
+def downconvert(signal, frequency, nyquist, bandwidth, points):
     # Choose nearest frequency bin
-    n         = len(signal)//2
+    n         = points//2
     width     = nyquist/n
     frequency = width * np.ceil(frequency/width)
     # Perform frequency shift and apply low-pass filter
