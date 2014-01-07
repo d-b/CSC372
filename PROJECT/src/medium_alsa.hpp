@@ -17,9 +17,9 @@ namespace modem
         const duplex   io_mode;
 
         // Buffers
-        std::vector<double>              buffer;
-        std::deque<std::complex<double>> buffer_input;
-        std::deque<std::complex<double>> buffer_output;
+        std::vector<float>              buffer;
+        std::deque<std::complex<float>> buffer_input;
+        std::deque<std::complex<float>> buffer_output;
 
         // ALSA device initialization
         snd_pcm_t* handle_input;
@@ -42,6 +42,7 @@ namespace modem
             std::string message;
         public:
             alsa_exception(const std::string& message);
+            virtual ~alsa_exception() throw() {};
             virtual std::string compute(const std::string& file, int line);
         };
 

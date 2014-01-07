@@ -20,6 +20,8 @@ namespace modem {
         }
 
     public:
+        virtual ~exception() throw() {};
+
         exception& update(const std::string& file, int line) {
             if(message.empty()) message = compute(file, line);
             return *this;

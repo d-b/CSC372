@@ -60,13 +60,13 @@ namespace modem
            throwx(alsa_exception(error.str()));
         }
     
-        if((res = snd_pcm_hw_params_set_format(*handle, hw_params, SND_PCM_FORMAT_FLOAT64)) < 0) {
+        if((res = snd_pcm_hw_params_set_format(*handle, hw_params, SND_PCM_FORMAT_FLOAT)) < 0) {
            error << "cannot set sample format (" << snd_strerror(res) << ")";
            throwx(alsa_exception(error.str()));
         }
     
         if((res = snd_pcm_hw_params_set_rate(*handle, hw_params, rate, 0)) < 0) {
-           error << "cannot set sample format (" << snd_strerror(res) << ")";
+           error << "cannot set sample rate (" << snd_strerror(res) << ")";
            throwx(alsa_exception(error.str()));
         }
     
